@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Infodose - Biohacking Neural</title>
+  
+  <!-- PWA & Apple Metadata -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3062/3062125.png">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <style>
+    :root {
+      --bg: #000000;
+      --accent: #ffffff;
+      --glass: rgba(255, 255, 255, 0.04);
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* Apple-style smooth scroll sections */
+    section {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: sticky;
+      top: 0;
+      background: var(--bg);
+    }
+
+    .glass-pill {
+      background: var(--glass);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 32px;
+      transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .glass-pill:active {
+      transform: scale(0.96);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease-out;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Neural Pulse Animation */
+    .neural-gate {
+      position: relative;
+      width: 140px;
+      height: 140px;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      inset: 0;
+      border: 1px solid var(--accent);
+      border-radius: 50%;
+      opacity: 0;
+      animation: pulse-ring 4s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 0.8; }
+      100% { transform: scale(2.2); opacity: 0; }
+    }
+
+    /* Gradient Text */
+    .text-gradient {
+      background: linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.4) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    #dose-display {
+      min-height: 180px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Overlay -->
+  <div id="loader" class="fixed inset-0 z-[100] bg-black flex items-center justify-center transition-opacity duration-700">
+    <div class="neural-gate">
+      <div class="pulse-ring" style="animation-delay: 0s"></div>
+      <div class="pulse-ring" style="animation-delay: 1s"></div>
+      <div class="flex items-center justify-center h-full">
+        <span class="text-2xl font-bold tracking-tighter">DUAL</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero Section -->
+  <section id="hero">
+    <div class="text-center space-y-4 max-w-lg">
+      <p class="text-xs uppercase tracking-[0.3em] opacity-40 font-bold">Neural Biohacking</p>
+      <h1 class="text-5xl md:text-7xl font-bold tracking-tight text-gradient">Infodose</h1>
+      <p class="text-xl text-white/60 font-light">Ative estados de consciência em doses precisas de IA.</p>
+    </div>
+    <div class="absolute bottom-12 animate-bounce opacity-20">
+      <i data-lucide="chevron-down"></i>
+    </div>
+  </section>
+
+  <!-- Command Section -->
+  <section id="selector">
+    <div class="reveal w-full max-w-sm space-y-8 text-center">
+      <h2 class="text-3xl font-semibold tracking-tight">O que você precisa agora?</h2>
+      
+      <div class="grid gap-4">
+        <button onclick="dose('High Focus', 'gamma', '⚡')" class="glass-pill p-6 flex items-center gap-6 group">
+          <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/40 transition-colors">
+            <i data-lucide="zap" class="text-blue-400"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="font-bold">High Focus</h3>
+            <p class="text-xs opacity-50 italic">Frequência Gamma (40Hz)</p>
+          </div>
+        </button>
+
+        <button onclick="dose('Flow State', 'alpha', '✨')" class="glass-pill p-6 flex items-center gap-6 group">
+          <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center group-hover:bg-purple-500/40 transition-colors">
+            <i data-lucide="sparkles" class="text-purple-400"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="font-bold">Flow State</h3>
+            <p class="text-xs opacity-50 italic">Frequência Alpha (10Hz)</p>
+          </div>
+        </button>
+
+        <button onclick="dose('Deep Clarity', 'theta', '🧘')" class="glass-pill p-6 flex items-center gap-6 group">
+          <div class="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/40 transition-colors">
+            <i data-lucide="wind" class="text-emerald-400"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="font-bold">Deep Clarity</h3>
+            <p class="text-xs opacity-50 italic">Frequência Theta (6Hz)</p>
+          </div>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Active Interface Overlay -->
+  <div id="active-ui" class="fixed inset-0 z-50 bg-black hidden flex flex-col items-center justify-center p-8 text-center">
+    <div class="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div id="dynamic-bg" class="absolute w-[200%] h-[200%] top-[-50%] left-[-50%] transition-all duration-1000"></div>
+    </div>
+
+    <div class="neural-gate mb-12">
+        <div class="pulse-ring"></div>
+        <div id="status-icon" class="flex items-center justify-center h-full text-4xl">💊</div>
+    </div>
+
+    <div class="max-w-md w-full space-y-8 z-10">
+        <h2 id="status-text" class="text-sm uppercase tracking-[0.4em] opacity-40 font-bold">Sincronizando...</h2>
+        <div id="dose-display" class="flex items-center justify-center">
+            <p id="ai-text" class="text-2xl md:text-3xl font-light italic text-white/90 leading-relaxed"></p>
+        </div>
+        
+        <div class="pt-12">
+            <button onclick="terminate()" class="glass-pill px-8 py-3 text-sm font-bold uppercase tracking-widest text-white/40 hover:text-white transition-all">
+                Encerrar Dose
+            </button>
+        </div>
+    </div>
+  </div>
+
+  <script>
+    const apiKey = ""; // Injetado automaticamente
+    let audioCtx, osc, gain;
+
+    // Initialize Lucide
+    lucide.createIcons();
+
+    // Reveal on scroll
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+    // Loader simulation
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        document.getElementById('loader').classList.add('opacity-0');
+        setTimeout(() => document.getElementById('loader').remove(), 700);
+      }, 1500);
+    });
+
+    async function fetchNeuralDose(state) {
+        const prompt = `Você é o Infodose. O usuário ativou o comando ${state}.
+        Gere uma instrução de biohacking curta (12 palavras max).
+        Foque em: percepção corporal, respiração ou mentalidade.
+        Responda apenas a frase em Português.`;
+
+        try {
+            const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    systemInstruction: { parts: [{ text: "Seja místico e técnico ao mesmo tempo. Tom futurista Apple." }] }
+                })
+            });
+            const data = await resp.json();
+            return data.candidates[0].content.parts[0].text;
+        } catch (e) {
+            return "A clareza é o resultado da intenção pura. Foque.";
+        }
+    }
+
+    function startNeuralAudio(freq) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        osc = audioCtx.createOscillator();
+        gain = audioCtx.createGain();
+        
+        const baseFreq = 200;
+        let brainFreq = 10;
+        if(freq === 'gamma') brainFreq = 40;
+        if(freq === 'alpha') brainFreq = 10;
+        if(freq === 'theta') brainFreq = 6;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(baseFreq + brainFreq, audioCtx.currentTime);
+        
+        gain.gain.setValueAtTime(0, audioCtx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.04, audioCtx.currentTime + 2);
+
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+    }
+
+    async function dose(state, freq, icon) {
+        const ui = document.getElementById('active-ui');
+        const textDisplay = document.getElementById('ai-text');
+        const status = document.getElementById('status-text');
+        const dynamicBg = document.getElementById('dynamic-bg');
+        
+        ui.classList.remove('hidden');
+        document.getElementById('status-icon').innerText = icon;
+        textDisplay.innerText = "";
+        status.innerText = "Calibrando Frequências...";
+        
+        // Dynamic BG color
+        const colors = { gamma: 'blue', alpha: 'purple', theta: 'emerald' };
+        dynamicBg.style.background = `radial-gradient(circle, ${colors[freq]} 0%, transparent 70%)`;
+
+        startNeuralAudio(freq);
+
+        const aiText = await fetchNeuralDose(state);
+        status.innerText = "Conexão Estabelecida";
+        
+        // Typing effect
+        let i = 0;
+        const type = () => {
+            if (i < aiText.length) {
+                textDisplay.innerText += aiText.charAt(i);
+                i++;
+                setTimeout(type, 30);
+            }
+        };
+        type();
+    }
+
+    function terminate() {
+        if (gain) {
+            gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+            setTimeout(() => osc.stop(), 600);
+        }
+        document.getElementById('active-ui').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
+
