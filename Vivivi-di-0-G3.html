@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ViViVi | Códex Infodose - Fusion Edition</title>
+
+    <link rel="manifest" href="./manifest.json">
+    <meta name="theme-color" content="#2563eb">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600&family=Orbitron:wght@500;700;900&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        vivivi: {
+                            dark: '#050414',
+                            deep: '#1a103c',
+                            gold: '#ffd700',
+                            neonGold: '#fff59d',
+                            rose: '#ff2e63',
+                            tiffany: '#08f7fe',
+                            glass: 'rgba(255, 255, 255, 0.05)'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Montserrat', 'sans-serif'],
+                        tech: ['Orbitron', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                    },
+                    boxShadow: {
+                        'neon-gold': '0 0 10px rgba(255, 215, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.3)',
+                        'neon-blue': '0 0 10px rgba(8, 247, 254, 0.5), 0 0 20px rgba(8, 247, 254, 0.3)',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: 0, transform: 'translateY(10px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root { --bg-grad: linear-gradient(180deg, #050414 0%, #1a103c 100%); }
+        body { background: var(--bg-grad); color: #e0e0e0; font-family: 'Montserrat', sans-serif; overflow-x: hidden; }
+
+        /* Glassmorphism */
+        .kodux-glass {
+            background: rgba(20, 20, 35, 0.6);
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.15);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:0;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px; opacity: 0.15;
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: #050414; }
+        ::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 2px; }
+
+        /* Loader */
+        .haski-loader {
+            width: 60px; height: 60px;
+            border: 4px solid rgba(8, 247, 254, 0.3); border-radius: 50%; border-top-color: #08f7fe;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-interact { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .btn-interact:active { transform: scale(0.96); }
+
+        /* Video Styles */
+        .video-row { display: flex; gap: 12px; overflow-x: auto; padding: 4px 0 16px 0; scroll-behavior: smooth; }
+        .vid-card { min-width: 140px; width: 140px; flex-shrink: 0; }
+    </style>
+</head>
+<body class="flex flex-col items-center min-h-screen relative p-4 selection:bg-vivivi-tiffany selection:text-black">
+
+    <div class="scanlines"></div>
+
+    <main id="app" class="w-full max-w-md mx-auto relative z-10 flex flex-col min-h-[90vh]">
+        
+        <header class="text-center py-6 mb-2">
+            <h1 class="font-tech text-4xl text-transparent bg-clip-text bg-gradient-to-r from-vivivi-gold via-vivivi-neonGold to-vivivi-gold drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]">ViViVi</h1>
+            <p class="text-[10px] text-vivivi-tiffany tracking-[0.3em] font-bold uppercase mt-1">Códex Arquétipos & Aromas</p>
+        </header>
+
+        <section id="view-landing" class="flex-1 flex flex-col justify-center items-center text-center animate-fade-in px-4">
+            <div class="relative w-40 h-40 mb-8 animate-float">
+                <div class="absolute inset-0 rounded-full bg-vivivi-tiffany blur-[60px] opacity-20"></div>
+                <div class="w-full h-full rounded-full border border-vivivi-gold/30 flex items-center justify-center bg-black/30 backdrop-blur-sm shadow-neon-gold">
+                    <i class="fa-solid fa-dna text-6xl text-vivivi-gold drop-shadow-[0_0_15px_rgba(255,215,0,0.8)]"></i>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold font-tech mb-3 text-white">Inicie a Sintonização</h2>
+            <p class="text-gray-400 text-sm mb-8 leading-relaxed max-w-xs mx-auto">O algoritmo Haski está pronto para calcular sua frequência vibracional.</p>
+            <button onclick="app.startQuiz()" class="btn-interact w-full py-4 rounded-xl font-bold font-tech text-black bg-gradient-to-r from-vivivi-tiffany to-vivivi-rose shadow-neon-blue relative overflow-hidden group">
+                <span class="relative z-10">ACESSAR CÓDEX</span>
+                <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+            </button>
+            <p class="mt-4 text-[10px] text-gray-600 font-mono">v.4.0.0 // FUSION_INTEGRATED</p>
+        </section>
+
+        <section id="view-quiz" class="hidden flex-1 flex flex-col w-full">
+            <div class="w-full h-1 bg-gray-800 mb-6 relative overflow-hidden rounded-full">
+                <div id="progress-bar" class="absolute top-0 left-0 h-full bg-vivivi-tiffany shadow-[0_0_10px_#08f7fe] transition-all duration-500 w-0"></div>
+            </div>
+            <div class="kodux-glass p-6 rounded-2xl flex-1 flex flex-col relative animate-fade-in border-t border-vivivi-gold/20">
+                <div class="flex justify-between items-end mb-4">
+                    <span class="text-vivivi-gold text-xs font-bold uppercase tracking-widest font-tech">Dados de Entrada</span>
+                    <span class="text-xs text-gray-500 font-mono"><span id="q-current">1</span> / <span id="q-total">6</span></span>
+                </div>
+                <h3 id="question-text" class="text-lg font-medium mb-8 leading-relaxed min-h-[4rem] flex items-center text-white">Carregando...</h3>
+                <div id="options-container" class="space-y-3 flex-1 overflow-y-auto custom-scrollbar pr-1"></div>
+            </div>
+        </section>
+
+        <section id="view-loading" class="hidden flex-1 flex flex-col justify-center items-center text-center">
+            <div class="haski-loader mb-6"></div>
+            <h3 class="text-vivivi-tiffany font-tech text-xl animate-pulse tracking-widest mb-2">PROCESSANDO</h3>
+            <div id="loading-text" class="text-xs text-vivivi-rose font-mono">Calibrando Sensores Aromáticos...</div>
+        </section>
+
+        <section id="view-result" class="hidden flex-1 w-full pb-10">
+            <div class="text-center mb-6 relative">
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 bg-vivivi-gold blur-[80px] opacity-10 pointer-events-none"></div>
+                <p class="text-xs text-vivivi-tiffany uppercase tracking-[0.2em] font-bold mb-2">Arquétipo Identificado</p>
+                <h2 id="result-archetype" class="text-4xl font-serif text-white drop-shadow-md mb-2">O Herói</h2>
+                <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full border border-vivivi-rose/30 bg-vivivi-rose/10 backdrop-blur-md">
+                    <i class="fa-solid fa-spray-can text-vivivi-rose text-xs"></i>
+                    <span class="text-xs font-bold text-vivivi-rose uppercase" id="result-aroma-name">DO TRIUNFO</span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <details class="kodux-glass rounded-xl group overflow-hidden transition-all duration-300">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer select-none bg-white/5 hover:bg-white/10 transition">
+                        <div class="flex items-center gap-3"><i class="fa-solid fa-fingerprint text-vivivi-gold"></i><span class="font-bold text-xs uppercase tracking-wide">Código do Arquétipo</span></div>
+                        <i class="fa-solid fa-chevron-down text-gray-500 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-4 text-sm text-gray-300 space-y-4 border-t border-white/5 bg-black/20"><div id="archetype-details" class="leading-relaxed"></div></div>
+                </details>
+
+                <details class="kodux-glass rounded-xl group overflow-hidden transition-all duration-300">
+                    <summary class="flex justify-between items-center p-4 cursor-pointer select-none bg-white/5 hover:bg-white/10 transition">
+                        <div class="flex items-center gap-3"><i class="fa-solid fa-flask text-vivivi-tiffany"></i><span class="font-bold text-xs uppercase tracking-wide">Fórmula ViViVi</span></div>
+                        <i class="fa-solid fa-chevron-down text-gray-500 transition-transform group-open:rotate-180"></i>
+                    </summary>
+                    <div class="p-4 border-t border-white/5 bg-black/20">
+                        <div class="mb-3"><h4 class="text-vivivi-tiffany text-[10px] uppercase font-bold">Ingredientes</h4><p id="aroma-ingredients" class="text-white italic text-sm"></p></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><h4 class="text-vivivi-tiffany text-[10px] uppercase font-bold">Ambiente</h4><p id="aroma-environments" class="text-[10px] text-gray-400"></p></div>
+                            <div><h4 class="text-vivivi-rose text-[10px] uppercase font-bold">Efeito</h4><p id="aroma-effects" class="text-[10px] text-gray-400"></p></div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <div id="cinema-section" class="mt-6 pt-4 border-t border-white/10">
+                <div class="flex justify-between items-end mb-4">
+                    <h3 class="text-xs font-bold text-vivivi-gold uppercase tracking-widest"><i class="fa-brands fa-youtube mr-2"></i>Frequência Recomendada</h3>
+                    <span class="text-[9px] text-gray-500" id="rec-category-name">Curadoria Haski</span>
+                </div>
+                <div id="video-container" class="space-y-6"></div>
+            </div>
+
+            <div class="mt-8 grid grid-cols-1 gap-3">
+                <button onclick="app.activateHaski()" class="btn-interact w-full py-4 rounded-xl bg-gradient-to-r from-gray-800 to-black border border-vivivi-tiffany/30 shadow-neon-blue flex items-center justify-center gap-3 group">
+                    <div class="w-8 h-8 rounded-full bg-vivivi-tiffany/20 flex items-center justify-center group-hover:bg-vivivi-tiffany text-vivivi-tiffany"><i class="fa-solid fa-robot"></i></div>
+                    <div class="text-left"><span class="block text-xs text-vivivi-tiffany font-bold uppercase">Ativar Haski AI</span><span class="block text-[10px] text-gray-400">Gerar Plano de Ação</span></div>
+                </button>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="app.openWhatsApp()" class="btn-interact py-3 rounded-xl bg-[#25D366]/10 border border-[#25D366]/30 text-white flex flex-col items-center justify-center gap-1"><i class="fa-brands fa-whatsapp text-xl text-[#25D366]"></i><span class="text-[9px] uppercase font-bold">Comprar Aroma</span></button>
+                    <button onclick="app.schedulePersonalizacao()" class="btn-interact py-3 rounded-xl bg-vivivi-gold/10 border border-vivivi-gold/30 text-white flex flex-col items-center justify-center gap-1"><i class="fa-regular fa-calendar-check text-xl text-vivivi-gold"></i><span class="text-[9px] uppercase font-bold">Agendar Visita</span></button>
+                </div>
+            </div>
+            
+            <div class="mt-8 flex gap-4 opacity-60 hover:opacity-100 transition-opacity">
+                <button onclick="location.reload()" class="flex-1 py-2 text-xs text-gray-400 hover:text-white border-b border-transparent hover:border-white transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Reiniciar</button>
+                <button onclick="app.shareResult()" class="flex-1 py-2 text-xs text-gray-400 hover:text-vivivi-tiffany border-b border-transparent hover:border-vivivi-tiffany transition-colors"><i class="fa-solid fa-share-nodes mr-1"></i> Compartilhar</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="player-overlay" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-3xl hidden flex-col animate-fade-in">
+        <div class="p-6 flex justify-between items-center">
+            <span class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">DualTube Player</span>
+            <button onclick="app.closePlayer()" class="w-8 h-8 rounded-full border border-red-500/30 text-red-500 hover:bg-red-500/20 flex items-center justify-center transition"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="flex-1 flex items-center justify-center p-4">
+            <div id="yt-embed" class="w-full max-w-4xl aspect-video bg-black rounded-2xl border border-vivivi-gold/20 shadow-[0_0_50px_rgba(255,215,0,0.1)] overflow-hidden"></div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-vivivi-tiffany text-black px-6 py-3 rounded-full shadow-neon-blue transform -translate-y-20 opacity-0 transition-all duration-300 z-[300] font-bold text-xs flex items-center gap-2">
+        <i class="fa-solid fa-check-circle"></i> <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        // --- LINKS CONFIG ---
+        const LINKS = {
+            WHATSAPP_PHONE: '', 
+            CALENDLY_URL: 'https://calendly.com/SEU_USUARIO/consultoria-vivivi', 
+            CHATGPT_URL: 'https://chat.openai.com'
+        };
+        
+        // --- FUSION OS MAPPING ---
+        const FUSION_MAP = {
+            'innocent': 'SERENA',
+            'explorer': 'ARTEMIS',
+            'sage': 'SOLUS',
+            'hero': 'VITALIS',
+            'caregiver': 'RHEA',
+            'rebel': 'KAOS',
+            'lover': 'PULSE',
+            'creator': 'GENUS',
+            'jester': 'LUMINE',
+            'magician': 'NOVA',
+            'ruler': 'ATLAS',
+            'orphan': 'HORUS'
+        };
+
+        // --- DATA LAYERS ---
+        // 1. DUALTUBE VIDEO LIBRARY (Importado do Fusion OS)
+        const VIDEO_LIBRARY = [
+            { 
+                cat: 'Trilhas e Ativações', 
+                tags: ['creator', 'lover', 'jester', 'criacao', 'desejo', 'alegria'],
+                vids: ["Bt_rLbMjJDk", "_0wVkryxanE", "Id2NI9tv1r4"],
+                desc: 'Aromas, Arquétipos e Playlists'
+            },
+            { 
+                cat: 'Sinopses Essenciais', 
+                tags: ['hero', 'ruler', 'magician', 'triunfo', 'poder', 'prosperidade'],
+                vids: ["qldgs0aLdB0", "FbutKMpd8MY", "1L9_rFmIGJ8"],
+                desc: 'Dopamina, Espaço da Mente, Recompensa'
+            },
+            { 
+                cat: 'Ambiente e Mente', 
+                tags: ['sage', 'explorer', 'rebel', 'mente', 'novos_caminhos', 'revolucao'],
+                vids: ["koKhjQKGJSc", "KrtOVrk8aDk"],
+                desc: 'Poder das cortinas e o chão'
+            },
+            { 
+                cat: 'Neurociência', 
+                tags: ['hero', 'sage', 'magician'],
+                vids: ["NBWDV6xjUP0", "dGYbN8jgdNQ", "JBjFhAutIVk", "GSBv45vigRE"],
+                desc: 'Dopamina, TDAH, Subconsciente'
+            },
+            { 
+                cat: 'Meditações Guiadas', 
+                tags: ['innocent', 'caregiver', 'orphan', 'paz', 'lar', 'raizes'],
+                vids: ["hfQ1L6fCfAo", "Tq99vQNQ6dQ", "DTDfkHwuMic", "OVfqxW_Xlhw", "kCHvLOtJIwQ"],
+                desc: 'Deriva, Navegando, Sinfonia'
+            }
+        ];
+
+        // 2. ARCHETYPES & AROMAS (Original ViViVi)
+        const DB = {
+            archetypes: {
+                innocent: { name: "Inocente", aromaId: "paz", traits: { carreira: "Ética e transparência.", relacionamentos: "Lealdade pura.", criatividade: "Simplicidade genial.", prosperidade: "Segurança e fé." } },
+                explorer: { name: "Explorador", aromaId: "novos_caminhos", traits: { carreira: "Autonomia total.", relacionamentos: "Parceria de aventuras.", criatividade: "Fora da caixa.", prosperidade: "Liberdade geográfica." } },
+                sage: { name: "Sábio", aromaId: "mente", traits: { carreira: "Especialista/Mentor.", relacionamentos: "Troca intelectual.", criatividade: "Baseada em dados.", prosperidade: "Investimento inteligente." } },
+                hero: { name: "Herói", aromaId: "triunfo", traits: { carreira: "Alta performance.", relacionamentos: "Proteção mútua.", criatividade: "Foco em solução.", prosperidade: "Conquista de metas." } },
+                caregiver: { name: "Cuidador", aromaId: "lar", traits: { carreira: "Serviço e apoio.", relacionamentos: "Acolhimento total.", criatividade: "Para o bem comum.", prosperidade: "Estabilidade familiar." } },
+                rebel: { name: "Rebelde", aromaId: "revolucao", traits: { carreira: "Disruptiva.", relacionamentos: "Intensos e livres.", criatividade: "Quebra de padrões.", prosperidade: "Independência radical." } },
+                lover: { name: "Amante", aromaId: "desejo", traits: { carreira: "Estética e paixão.", relacionamentos: "Conexão de alma.", criatividade: "Sensorial.", prosperidade: "Luxo e beleza." } },
+                creator: { name: "Criador", aromaId: "criacao", traits: { carreira: "Expressão autoral.", relacionamentos: "Inspiração mútua.", criatividade: "Visionária.", prosperidade: "Viver da arte/ideia." } },
+                jester: { name: "Bobo da Corte", aromaId: "alegria", traits: { carreira: "Entretenimento.", relacionamentos: "Leveza e humor.", criatividade: "Espontânea.", prosperidade: "Work hard, play hard." } },
+                magician: { name: "Mago", aromaId: "prosperidade", traits: { carreira: "Transformação.", relacionamentos: "Espirituais.", criatividade: "Intuitiva.", prosperidade: "Manifestação." } },
+                ruler: { name: "Governante", aromaId: "poder", traits: { carreira: "Liderança e gestão.", relacionamentos: "Respeito mútuo.", criatividade: "Estrutural.", prosperidade: "Império e legado." } },
+                orphan: { name: "Órfão", aromaId: "raizes", traits: { carreira: "Pertencimento.", relacionamentos: "Igualdade.", criatividade: "Prática e realista.", prosperidade: "Comunidade forte." } }
+            },
+            aromas: {
+                paz: { name: "Aroma da Paz", ingredients: "Lavanda, Camomila, Capim-limão", environments: "Quarto, Sala de Meditação", effects: "Descompressão, Serenidade", potential: "Limpeza energética e calma mental." },
+                novos_caminhos: { name: "Aroma da Jornada", ingredients: "Cedro, Eucalipto, Pimenta Rosa", environments: "Home Office, Varanda", effects: "Foco, Expansão", potential: "Coragem para iniciar ciclos." },
+                mente: { name: "Aroma da Mente", ingredients: "Sândalo, Alecrim, Olíbano", environments: "Biblioteca, Escritório", effects: "Clareza, Memória", potential: "Conexão com a sabedoria interior." },
+                triunfo: { name: "Aroma do Triunfo", ingredients: "Limão Siciliano, Gengibre, Alecrim", environments: "Academia, Sala de Reunião", effects: "Energia, Dopamina", potential: "Força de vontade inabalável." },
+                criacao: { name: "Aroma da Criação", ingredients: "Laranja Doce, Ylang-Ylang, Gerânio", environments: "Ateliê, Sala de Estar", effects: "Inspiração, Fluxo", potential: "Desbloqueio criativo." },
+                poder: { name: "Aroma do Poder", ingredients: "Vetiver, Jasmim, Cedro Atlas", environments: "Sala de Jantar, Diretoria", effects: "Autoridade, Confiança", potential: "Magnetismo pessoal e comando." },
+                lar: { name: "Aroma do Acolhimento", ingredients: "Baunilha, Rosa, Manjericão", environments: "Cozinha, Quarto de Hóspedes", effects: "Conforto, Oxitocina", potential: "Cura emocional e união." },
+                prosperidade: { name: "Aroma da Abundância", ingredients: "Canela, Patchouli, Laranja Amarga", environments: "Entrada, Caixa", effects: "Atração, Autoestima", potential: "Sintonização com a riqueza." },
+                revolucao: { name: "Aroma da Revolução", ingredients: "Pimenta Preta, Cravo, Cardamomo", environments: "Garagem, Área de Festas", effects: "Adrenalina, Ruptura", potential: "Mudança radical de estado." },
+                desejo: { name: "Aroma do Desejo", ingredients: "Jasmim, Rosa Damascena, Âmbar", environments: "Suíte, Banheiro Spa", effects: "Libido, Sensualidade", potential: "Amor próprio e atração." },
+                alegria: { name: "Aroma da Alegria", ingredients: "Tangerina, Hortelã, Verbena", environments: "Sala de Jogos, Jardim", effects: "Serotonina, Risos", potential: "Otimismo e celebração." },
+                raizes: { name: "Aroma das Raízes", ingredients: "Lavanda, Cipreste, Vetiver", environments: "Sala de TV, Hall", effects: "Segurança, Chão", potential: "Estabilidade e realismo." }
+            }
+        };
+
+        const QUESTIONS = [
+            { text: "Qual a sua busca essencial hoje?", options: [ { l: "Paz e Harmonia", t: ['innocent','orphan','caregiver'] }, { l: "Poder e Sucesso", t: ['ruler','hero','magician'] }, { l: "Liberdade e Diversão", t: ['explorer','jester','rebel'] }, { l: "Conexão e Criação", t: ['lover','creator','sage'] } ] },
+            { text: "Diante do caos, você...", options: [ { l: "Luto para vencer", t: ['hero','ruler'] }, { l: "Inovo a saída", t: ['creator','magician'] }, { l: "Analiso os fatos", t: ['sage','explorer'] }, { l: "Ajudo os outros", t: ['orphan','caregiver'] } ] },
+            { text: "Seu superpoder secreto é:", options: [ { l: "Intensidade", t: ['lover','rebel'] }, { l: "Organização", t: ['ruler','innocent'] }, { l: "Espontaneidade", t: ['jester','explorer'] }, { l: "Visão de Futuro", t: ['magician','sage'] } ] },
+            { text: "Seu maior medo:", options: [ { l: "Fracasso/Impotência", t: ['hero','ruler'] }, { l: "Tédio/Prisão", t: ['explorer','jester'] }, { l: "Ignorância/Ilusão", t: ['sage','innocent'] }, { l: "Solidão/Rejeição", t: ['lover','orphan','caregiver'] } ] },
+            { text: "Prosperidade para você é:", options: [ { l: "Liberdade total", t: ['explorer','rebel'] }, { l: "Segurança familiar", t: ['orphan','caregiver','ruler'] }, { l: "Legado e Obras", t: ['creator','magician','hero'] }, { l: "Viver o Agora", t: ['jester','innocent','lover'] } ] },
+            { text: "Escolha um Elemento:", options: [ { l: "Fogo (Ação)", t: ['hero','magician','rebel'] }, { l: "Terra (Corpo)", t: ['caregiver','creator','orphan'] }, { l: "Ar (Mente)", t: ['sage','explorer','jester'] }, { l: "Água (Emoção)", t: ['lover','innocent','ruler'] } ] }
+        ];
+
+        /* ================= DI_SYSTEM ================= */
+        const DI_STORE_KEY = 'di_system_store';
+        const DI_REMOTE_BASE = ''; 
+
+        const di_defaults = {
+            di_assistantName: 'TRINITY ∴ KOBLLUX',
+            di_userName: '',
+            di_history: [],
+            di_watchedVideos: [], // New for Video Tracking
+            di_trainingText: '',
+            di_trainingActive: false,
+            di_lastArchetype: null,
+            di_lastAroma: null
+        };
+
+        const di_system = {
+            readAllLocal: function() {
+                try {
+                    const raw = localStorage.getItem(DI_STORE_KEY);
+                    return raw ? Object.assign({}, di_defaults, JSON.parse(raw)) : { ...di_defaults };
+                } catch (e) { return { ...di_defaults }; }
+            },
+            writeAllLocal: function(obj) {
+                const current = this.readAllLocal();
+                const safe = Object.assign({}, current, obj);
+                localStorage.setItem(DI_STORE_KEY, JSON.stringify(safe));
+                return safe;
+            },
+            get: function(key) { return this.readAllLocal()[key]; },
+            set: function(key, value) { return this.writeAllLocal({ [key]: value }); },
+            syncToRemote: async function() {
+                // Placeholder for sync logic
+                if (DI_REMOTE_BASE) console.log('Syncing to remote...');
+            }
+        };
+
+        window.di_get = (k) => di_system.get(k);
+        window.di_set = (k,v) => di_system.set(k,v);
+
+        /* ================= APP LOGIC ================= */
+        const app = {
+            state: { currentQ: 0, scores: {}, winner: null },
+
+            init: function() {
+                Object.keys(DB.archetypes).forEach(k => this.state.scores[k] = 0);
+            },
+
+            showToast: function(msg) {
+                const t = document.getElementById('toast');
+                document.getElementById('toast-msg').innerText = msg;
+                t.classList.remove('-translate-y-20', 'opacity-0');
+                setTimeout(() => t.classList.add('-translate-y-20', 'opacity-0'), 3000);
+            },
+
+            startQuiz: function() {
+                this.init();
+                document.getElementById('view-landing').classList.add('hidden');
+                document.getElementById('view-quiz').classList.remove('hidden');
+                this.renderQuestion();
+            },
+
+            renderQuestion: function() {
+                const q = QUESTIONS[this.state.currentQ];
+                document.getElementById('q-current').innerText = this.state.currentQ + 1;
+                document.getElementById('q-total').innerText = QUESTIONS.length;
+                document.getElementById('question-text').innerText = q.text;
+                
+                const progress = ((this.state.currentQ) / QUESTIONS.length) * 100;
+                document.getElementById('progress-bar').style.width = `${progress}%`;
+
+                const container = document.getElementById('options-container');
+                container.innerHTML = '';
+                q.options.forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full text-left p-4 mb-2 rounded-lg border border-white/5 bg-white/5 hover:bg-vivivi-tiffany/10 hover:border-vivivi-tiffany/50 transition-all duration-300 text-sm font-medium text-gray-300 hover:text-white hover:shadow-[0_0_15px_rgba(8,247,254,0.1)] active:scale-[0.98]";
+                    btn.innerHTML = `<span class="pointer-events-none">${opt.l}</span>`;
+                    btn.onclick = () => this.handleAnswer(opt.t);
+                    container.appendChild(btn);
+                });
+            },
+
+            handleAnswer: function(types) {
+                types.forEach(t => { if(this.state.scores[t] !== undefined) this.state.scores[t]++; });
+                this.state.currentQ++;
+                if(this.state.currentQ < QUESTIONS.length) {
+                    setTimeout(() => this.renderQuestion(), 150);
+                } else {
+                    this.finishQuiz();
+                }
+            },
+
+            finishQuiz: function() {
+                document.getElementById('view-quiz').classList.add('hidden');
+                document.getElementById('view-loading').classList.remove('hidden');
+                
+                const texts = ["Analisando Frequência...", "Decodificando Arquétipo...", "Sintetizando Aroma..."];
+                let step = 0;
+                const interval = setInterval(() => {
+                    if(step < texts.length) document.getElementById('loading-text').innerText = texts[step++];
+                }, 600);
+
+                setTimeout(() => {
+                    clearInterval(interval);
+                    const winnerKey = Object.keys(this.state.scores).reduce((a, b) => this.state.scores[a] > this.state.scores[b] ? a : b);
+                    this.state.winner = winnerKey;
+                    
+                    // SAVE DI STATE
+                    const arch = DB.archetypes[winnerKey];
+                    const aroma = DB.aromas[arch.aromaId];
+                    di_system.set('di_lastArchetype', arch.name);
+                    di_system.set('di_lastAroma', aroma.name);
+                    
+                    const hist = di_system.get('di_history') || [];
+                    hist.push({ ts: new Date().toISOString(), type: 'QUIZ_RESULT', archetype: arch.name });
+                    di_system.set('di_history', hist);
+
+                    this.renderResult(winnerKey);
+                }, 2200);
+            },
+
+            renderResult: function(key) {
+                const arch = DB.archetypes[key];
+                const aroma = DB.aromas[arch.aromaId];
+                
+                document.getElementById('result-archetype').innerText = arch.name;
+                document.getElementById('result-aroma-name').innerText = aroma.name;
+                
+                // POPULATE DETAILS
+                const detailsHTML = `
+                    <div class="grid grid-cols-[20px_1fr] gap-2 items-start"><i class="fa-solid fa-briefcase text-vivivi-gold mt-1"></i><div><strong class="text-white block text-xs uppercase">Carreira</strong> ${arch.traits.carreira}</div></div>
+                    <div class="grid grid-cols-[20px_1fr] gap-2 items-start mt-2"><i class="fa-solid fa-heart text-vivivi-rose mt-1"></i><div><strong class="text-white block text-xs uppercase">Relações</strong> ${arch.traits.relacionamentos}</div></div>
+                    <div class="grid grid-cols-[20px_1fr] gap-2 items-start mt-2"><i class="fa-solid fa-lightbulb text-vivivi-tiffany mt-1"></i><div><strong class="text-white block text-xs uppercase">Criação</strong> ${arch.traits.criatividade}</div></div>
+                `;
+                document.getElementById('archetype-details').innerHTML = detailsHTML;
+                
+                document.getElementById('aroma-ingredients').innerText = aroma.ingredients;
+                document.getElementById('aroma-environments').innerText = aroma.environments;
+                document.getElementById('aroma-effects').innerText = aroma.effects;
+
+                // RENDER CURATED VIDEOS
+                this.renderCinema(key);
+
+                document.getElementById('view-loading').classList.add('hidden');
+                document.getElementById('view-result').classList.remove('hidden');
+            },
+
+            // --- CINEMA LOGIC (INTEGRATION) ---
+            renderCinema: function(winnerKey) {
+                const container = document.getElementById('video-container');
+                container.innerHTML = '';
+
+                // 1. Sort Categories: Put the one matching the winner archetype first
+                const sortedLib = [...VIDEO_LIBRARY].sort((a, b) => {
+                    const aMatch = a.tags.includes(winnerKey);
+                    const bMatch = b.tags.includes(winnerKey);
+                    return bMatch - aMatch; // True (1) comes first
+                });
+
+                // 2. Render Rows
+                sortedLib.forEach(cat => {
+                    const isRec = cat.tags.includes(winnerKey);
+                    const html = `
+                        <div>
+                            <div class="mb-2 flex items-center gap-2">
+                                ${isRec ? '<i class="fa-solid fa-star text-vivivi-gold text-[10px]"></i>' : ''}
+                                <h4 class="text-[10px] font-bold uppercase tracking-widest text-white/80 ${isRec ? 'text-vivivi-gold' : ''}">${cat.cat}</h4>
+                            </div>
+                            <div class="video-row">
+                                ${cat.vids.map(id => `
+                                    <div onclick="app.playVideo('${id}', '${cat.cat}')" class="vid-card kodux-glass p-1 rounded-lg hover:border-vivivi-tiffany/50 transition cursor-pointer group relative overflow-hidden">
+                                        <div class="relative w-full h-20 rounded bg-black">
+                                            <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition">
+                                            <div class="absolute inset-0 flex items-center justify-center"><i class="fa-solid fa-play text-white opacity-50 group-hover:opacity-100 group-hover:scale-125 transition"></i></div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                    container.innerHTML += html;
+                });
+            },
+
+            playVideo: function(id, cat) {
+                const overlay = document.getElementById('player-overlay');
+                const embed = document.getElementById('yt-embed');
+                
+                embed.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&rel=0" frameborder="0" allowfullscreen></iframe>`;
+                overlay.classList.remove('hidden', 'flex');
+                overlay.classList.add('flex');
+
+                // DI SYSTEM TRACKING
+                const watched = di_system.get('di_watchedVideos') || [];
+                if (!watched.includes(id)) {
+                    watched.push(id);
+                    di_system.set('di_watchedVideos', watched);
+                }
+                
+                // ADD TO HISTORY
+                const hist = di_system.get('di_history') || [];
+                hist.push({ ts: new Date().toISOString(), type: 'VIDEO_PLAY', videoId: id, category: cat });
+                di_system.set('di_history', hist);
+            },
+
+            closePlayer: function() {
+                const overlay = document.getElementById('player-overlay');
+                document.getElementById('yt-embed').innerHTML = '';
+                overlay.classList.add('hidden');
+                overlay.classList.remove('flex');
+            },
+
+            // --- END CINEMA LOGIC ---
+
+            activateHaski: function() {
+                if(!this.state.winner) return;
+                const arch = DB.archetypes[this.state.winner];
+                const aroma = DB.aromas[arch.aromaId];
+                
+                // *** FUSION MAPPING ***
+                // Converte o arquétipo atual (ex: 'hero') para o nome do Fusion (ex: 'VITALIS')
+                const fusionName = FUSION_MAP[this.state.winner] || 'VITALIS';
+                
+                // Salva no LocalStorage Global do Fusion OS
+                localStorage.setItem('di_activeArchetype', fusionName);
+
+                const prompt = `
+[SISTEMA: Ativar Persona HASKI]
+[CONTEXTO: Consultoria ViViVi & Fusion OS]
+Arquétipo Base: ${arch.name} -> Fusion: ${fusionName}
+Aroma: ${aroma.name} (${aroma.ingredients})
+Potencial: ${aroma.potential}
+
+Crie um "Micro-Plano de Ativação":
+1. Afirmação matinal.
+2. Ritual rápido com o aroma.
+3. Dica de playlist Cyberpunk-Zen.
+`;
+                di_system.set('di_trainingActive', true);
+                di_system.set('di_trainingText', prompt);
+                di_system.syncToRemote();
+
+                navigator.clipboard.writeText(prompt).then(() => {
+                    this.showToast(`Haski Ativo: ${fusionName} ✔`);
+                    setTimeout(() => window.open(LINKS.CHATGPT_URL, '_blank'), 1000);
+                }).catch(() => window.open(LINKS.CHATGPT_URL, '_blank'));
+            },
+
+            openWhatsApp: function() {
+                const text = `Olá! Sou *${document.getElementById('result-archetype').innerText}*. Gostaria do aroma *${document.getElementById('result-aroma-name').innerText}*!`;
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+            },
+            schedulePersonalizacao: function() { window.open(LINKS.CALENDLY_URL, '_blank'); },
+            shareResult: function() {
+                const text = `Sou ${document.getElementById('result-archetype').innerText} no ViViVi!`;
+                if (navigator.share) navigator.share({ title: 'ViViVi', text: text, url: window.location.href });
+                else { navigator.clipboard.writeText(text); this.showToast("Copiado!"); }
+            }
+        };
+
+        window.addEventListener('load', () => app.init());
+    </script>
+</body>
+</html>
+
