@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Fusion OS v29 — Hyper Dual</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#050505">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    :root {
+      --bg: #050505; /* Deep Black */
+      --glass: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      
+      /* DYNAMIC COLORS - CONTROLLED BY ARCHETYPE SYSTEM */
+      /* Default Neutral */
+      --active-color: #E5E5E5; 
+      --active-glow: rgba(255, 255, 255, 0.08);
+      --accent-secondary: #505050;
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    
+    body { 
+      background: var(--bg); 
+      color: #fff; 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow: hidden; 
+      height: 100vh; width: 100vw;
+      user-select: none;
+    }
+
+    /* --- ATMOSPHERE --- */
+    .bg-noise {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; opacity: 0.4;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    }
+    
+    .ambient-glow {
+        position: fixed; pointer-events: none; z-index: 0;
+        border-radius: 50%; filter: blur(120px); 
+        transition: background 1.5s ease, opacity 1.5s ease;
+    }
+    #glow-top { top: -30%; left: -20%; width: 90vw; height: 90vw; background: var(--active-color); opacity: 0.12; }
+    #glow-bottom { bottom: -30%; right: -20%; width: 90vw; height: 90vw; background: var(--accent-secondary); opacity: 0.08; }
+
+    /* --- VIEWPORT --- */
+    #universe-viewport {
+      display: flex; width: 300vw; height: 100vh;
+      transform: translateX(-100vw);
+      transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative; z-index: 10;
+    }
+
+    .screen-panel { 
+        width: 100vw; height: 100vh; flex-shrink: 0; position: relative; 
+        overflow: hidden; 
+    }
+
+    /* --- SCROLL SNAP SYSTEM (VERTICAL NEXUS) --- */
+    .snap-container {
+        height: 100vh; width: 100%;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scroll-behavior: smooth;
+        scrollbar-width: none; 
+    }
+    .snap-container::-webkit-scrollbar { display: none; }
+
+    .snap-section {
+        height: 100vh; width: 100%;
+        scroll-snap-align: start; scroll-snap-stop: always;
+        position: relative; display: flex;
+        flex-direction: column; justify-content: center; align-items: center;
+    }
+
+    /* --- COMPONENTS --- */
+    .glass-card {
+        background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+        border: 1px solid rgba(255,255,255,0.06);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border-radius: 24px;
+        transition: all 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .glass-card:active { transform: scale(0.98); }
+
+    .glass-pill {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      backdrop-filter: blur(16px);
+      border-radius: 20px;
+    }
+    
+    .text-dynamic { color: var(--active-color); transition: color 1s ease; }
+    .border-dynamic { border-color: var(--active-color); transition: border-color 1s ease; }
+    
+    /* VIDEO CAROUSEL */
+    .video-row { display: flex; gap: 16px; overflow-x: auto; padding: 10px 4px; scrollbar-width: none; }
+    .video-row::-webkit-scrollbar { display: none; }
+    .video-card { 
+      width: 240px; flex-shrink: 0; position: relative; 
+      border-radius: 16px; overflow: hidden; 
+      border: 1px solid rgba(255,255,255,0.05);
+      transition: all 0.4s;
+    }
+    .video-card:active { transform: scale(0.95); }
+    .video-card.watched { border-color: var(--active-color); }
+    .video-card.watched::after {
+      content: 'VISTO'; position: absolute; top: 8px; left: 8px;
+      font-size: 8px; font-weight: 900; background: var(--active-color); color: #000;
+      padding: 2px 6px; border-radius: 4px; z-index: 20;
+    }
+
+    /* MEMORY CARDS */
+    .memory-card {
+      background: rgba(255,255,255,0.02);
+      border-left: 2px solid transparent;
+      border-radius: 16px; padding: 16px;
+      transition: all 0.3s;
+    }
+    .memory-card.pinned { 
+      background: linear-gradient(90deg, var(--active-glow) 0%, rgba(0,0,0,0) 100%);
+      border-left-color: var(--active-color); 
+    }
+
+    /* ORB ANIMATION */
+    .orb-core { 
+      transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1); 
+      filter: drop-shadow(0 0 20px var(--active-glow));
+    }
+    .orb-wrapper:active .orb-core { transform: scale(0.9); }
+
+    /* UTILS */
+    .thin-scroll::-webkit-scrollbar { width: 0px; }
+    
+    /* BOOT */
+    #boot-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: #000; display: flex; align-items: center; justify-content: center;
+      flex-direction: column; transition: opacity 1s;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-noise"></div>
+  <div id="glow-top" class="ambient-glow"></div>
+  <div id="glow-bottom" class="ambient-glow"></div>
+
+  <!-- BOOT SEQUENCE -->
+  <div id="boot-screen">
+    <div class="text-3xl font-black tracking-[0.2em] mb-6 text-white animate-pulse">HYPER DUAL</div>
+    <div class="w-32 h-[1px] bg-white/10 rounded-full overflow-hidden">
+      <div id="boot-bar" class="h-full bg-white shadow-[0_0_15px_white] w-0 transition-all duration-[1500ms]"></div>
+    </div>
+    <div class="mt-3 text-[9px] text-white/30 font-mono tracking-widest uppercase">Syncing di_Keys...</div>
+  </div>
+
+  <!-- HEADER -->
+  <header class="fixed top-0 left-0 right-0 z-50 px-6 py-8 flex justify-between items-center pointer-events-none select-none">
+    <!-- PILOT IDENTITY -->
+    <div onclick="Navigation.to(1)" class="glass-pill px-4 py-2 flex items-center gap-3 pointer-events-auto cursor-pointer hover:bg-white/5 transition group border-white/5 hover:border-white/10">
+      <div id="header-dot" class="w-1.5 h-1.5 rounded-full bg-dynamic shadow-[0_0_12px_var(--active-color)] transition-all duration-700 group-hover:scale-125" style="background-color: var(--active-color)"></div>
+      <span id="displayUserHeader" class="font-bold text-[10px] tracking-[0.15em] text-white/80">PILOTO</span>
+    </div>
+    
+    <!-- SYSTEM IDENTITY -->
+    <div class="glass-pill px-4 py-2 pointer-events-auto flex items-center gap-3 border-white/5">
+      <span id="displayArchetypeBadge" class="text-dynamic font-black text-[9px] tracking-wider uppercase">...</span>
+      <div class="w-[1px] h-3 bg-white/10"></div>
+      <div id="header-sys-name" onclick="ArchetypeSystem.toggleMenu()" class="font-bold text-[10px] tracking-widest text-white/40 cursor-pointer hover:text-white transition">SYSTEM</div>
+    </div>
+  </header>
+
+  <!-- UNIVERSE VIEWPORT -->
+  <div id="universe-viewport">
+
+    <!-- === SCREEN 0: CORTEX (MEMORY) === -->
+    <section class="screen-panel flex flex-col pt-28 px-6 pb-6">
+      <div class="max-w-4xl w-full mx-auto h-full flex flex-col">
+        
+        <!-- Cortex Header -->
+        <div class="flex items-end justify-between mb-8">
+          <div>
+            <h2 class="font-black text-4xl tracking-tighter text-white">Córtex</h2>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-white/20"></span>
+              <span class="text-[10px] font-mono text-white/40 uppercase tracking-[0.2em]">Memória Cristalizada</span>
+            </div>
+          </div>
+          <div class="flex bg-white/5 rounded-full p-1 border border-white/5">
+            <button onclick="Cortex.switch('crystals')" id="tab-crystals" class="px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all bg-white/10 text-white shadow-lg">Cristais</button>
+            <button onclick="Cortex.switch('matrices')" id="tab-matrices" class="px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all text-white/40 hover:text-white">Contexto</button>
+          </div>
+        </div>
+
+        <!-- Crystals View -->
+        <div id="panel-crystals" class="flex-1 flex flex-col overflow-hidden animate-[fadeIn_0.5s_ease]">
+          <div class="flex gap-3 mb-6">
+            <div class="flex-1 glass-card rounded-xl flex items-center px-4 py-3 group focus-within:border-dynamic/30 transition border-white/5">
+              <i data-lucide="search" class="w-3.5 h-3.5 text-white/30 group-focus-within:text-dynamic transition"></i>
+              <input id="memory-search" oninput="Cortex.render()" class="w-full ml-3 text-xs font-medium bg-transparent border-none placeholder-white/20 tracking-wide text-white/90" placeholder="Buscar registro...">
+            </div>
+            <button onclick="Cortex.openNewMemory()" class="glass-card px-5 rounded-xl hover:bg-white/10 active:bg-white/20 transition flex items-center justify-center border-white/5">
+              <i data-lucide="plus" class="w-4 h-4 text-dynamic"></i>
+            </button>
+          </div>
+          
+          <div id="crystal-container" class="flex-1 overflow-y-auto thin-scroll space-y-3 pb-24 pr-1">
+            <!-- Injected -->
+          </div>
+        </div>
+
+        <!-- Matrices View -->
+        <div id="panel-matrices" class="hidden flex-1 flex-col overflow-hidden animate-[fadeIn_0.5s_ease] items-center justify-center text-center opacity-50">
+           <i data-lucide="cpu" class="w-12 h-12 text-white/20 mb-4"></i>
+           <p class="text-[10px] font-mono uppercase tracking-widest text-white/40">Contexto de Treinamento</p>
+           <p class="text-xs text-white/20 mt-2 max-w-xs">Variáveis "di_trainingText" gerenciadas pelo núcleo.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- === SCREEN 1: NEXUS (VERTICAL SCROLL) === -->
+    <section class="screen-panel">
+      <div id="nexus-scroll" class="snap-container">
+        
+        <!-- SECTION 1: HERO -->
+        <div class="snap-section">
+          <!-- ORB INTERACTIVE -->
+          <div id="orb-area" class="relative w-72 h-72 flex items-center justify-center cursor-grab active:cursor-grabbing z-10"
+               onmousedown="OrbDrag.start(event)" ontouchstart="OrbDrag.start(event)">
+            
+            <div class="absolute inset-0 rounded-full bg-gradient-to-tr from-dynamic to-transparent opacity-10 blur-[60px] animate-pulse"></div>
+            
+            <svg viewBox="0 0 200 200" class="orb-core w-full h-full">
+              <defs>
+                <linearGradient id="orbGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:white;stop-opacity:0.9" />
+                  <stop offset="100%" style="stop-color:white;stop-opacity:0.1" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="90" fill="none" stroke="url(#orbGrad)" stroke-width="0.5" opacity="0.4" />
+              <circle cx="100" cy="100" r="70" fill="none" stroke="url(#orbGrad)" stroke-width="0.2" opacity="0.3" />
+              <!-- Dynamic Status Arc -->
+              <path d="M100 20 A80 80 0 0 1 100 180" fill="none" stroke="var(--active-color)" stroke-width="2" stroke-linecap="round" class="opacity-80 transition-all duration-1000" />
+              <!-- Core -->
+              <circle cx="100" cy="100" r="8" fill="var(--active-color)" class="transition-colors duration-1000" />
+            </svg>
+          </div>
+
+          <div class="text-center z-20 mt-8">
+            <h1 id="hero-title" class="font-black text-7xl tracking-tighter text-white opacity-90 scale-y-90 uppercase">DUAL</h1>
+            
+            <div class="flex items-center justify-center gap-4 mt-4 opacity-40">
+              <div class="h-[1px] w-8 bg-white/40"></div>
+              <span id="archetype-status-text" class="font-mono text-[9px] uppercase tracking-[0.4em] text-white">FREQUÊNCIA BASE</span>
+              <div class="h-[1px] w-8 bg-white/40"></div>
+            </div>
+          </div>
+
+          <div class="absolute bottom-12 animate-bounce opacity-20 pointer-events-none">
+            <i data-lucide="chevron-down" class="w-6 h-6 text-white"></i>
+          </div>
+        </div>
+
+        <!-- SECTION 2: STATUS GRID -->
+        <div class="snap-section px-6 bg-gradient-to-t from-black via-black/40 to-transparent">
+          <div class="max-w-md w-full grid grid-cols-2 gap-4">
+            <div class="col-span-2 mb-2 pl-1">
+              <h3 class="font-bold text-2xl uppercase tracking-tight flex items-center gap-3">
+                <i data-lucide="activity" class="text-dynamic w-5 h-5"></i>
+                <span class="text-white/90">Sinais Vitais</span>
+              </h3>
+            </div>
+
+            <!-- Card 1 -->
+            <div class="glass-card p-6 rounded-2xl border-white/5">
+              <i data-lucide="zap" class="text-white/20 w-6 h-6 mb-4"></i>
+              <div class="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Estado</div>
+              <div class="text-lg font-bold text-white mt-1">Fluido</div>
+            </div>
+
+            <!-- Card 2 (Active Arch) -->
+            <div class="glass-card p-6 rounded-2xl border-dynamic/20 bg-dynamic/5 relative overflow-hidden">
+              <div class="absolute -right-4 -bottom-4 opacity-10 rotate-12 text-dynamic"><i data-lucide="radio" class="w-20 h-20"></i></div>
+              <i data-lucide="user" class="text-dynamic w-6 h-6 mb-4 relative z-10"></i>
+              <div class="text-[9px] uppercase tracking-[0.2em] text-dynamic/60 font-bold relative z-10">Frequência</div>
+              <div id="card-arch-name" class="text-lg font-bold text-dynamic mt-1 relative z-10">...</div>
+            </div>
+            
+            <!-- Card 3 (Level) -->
+             <div class="glass-card p-6 rounded-2xl border-white/5 col-span-2">
+              <div class="flex justify-between items-center">
+                 <div>
+                    <div class="text-[9px] uppercase tracking-[0.2em] text-white/30 font-bold">Nível de Sincronia</div>
+                    <div class="text-lg font-bold text-white mt-1">Estável</div>
+                 </div>
+                 <div class="h-10 w-10 rounded-full border border-white/10 flex items-center justify-center">
+                    <span class="text-[10px] font-bold text-dynamic">100%</span>
+                 </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SECTION 3: INSIGHT -->
+        <div class="snap-section px-6">
+           <div class="max-w-md w-full text-center">
+              <div class="glass-card p-8 border-l-4 border-dynamic mb-8 relative">
+                 <i data-lucide="quote" class="absolute top-4 left-4 w-4 h-4 text-white/10"></i>
+                 <p id="drk-quote" class="font-display text-xl font-light italic text-white/90 leading-relaxed">
+                   "O silêncio não é vazio. É cheio de respostas."
+                 </p>
+                 <div class="mt-4 flex justify-center">
+                    <span class="text-[9px] font-bold uppercase tracking-widest text-dynamic opacity-60">Dr. K — Insight</span>
+                 </div>
+              </div>
+
+              <!-- Video Suggestion Box -->
+              <div id="video-suggestion-card" class="w-full aspect-video rounded-2xl bg-white/5 border border-white/10 relative group cursor-pointer overflow-hidden">
+                 <img id="suggestion-thumb" src="" class="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:opacity-80 transition duration-700">
+                 <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-12 h-12 rounded-full bg-white/10 backdrop-blur flex items-center justify-center border border-white/20 group-hover:bg-dynamic group-hover:border-dynamic transition">
+                       <i data-lucide="play" class="w-4 h-4 fill-current text-white group-hover:text-black"></i>
+                    </div>
+                 </div>
+                 <div class="absolute bottom-4 left-0 right-0 text-center">
+                    <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-white/60 bg-black/50 px-3 py-1 rounded-full">Recomendação do Sistema</span>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- === SCREEN 2: DUALTUBE (CAROUSEL) === -->
+    <section class="screen-panel bg-[#020202] overflow-hidden flex flex-col">
+      <div class="pt-28 px-6 pb-32 h-full flex flex-col max-w-4xl mx-auto w-full">
+         <div class="flex justify-between items-end mb-8">
+           <div>
+             <h2 class="font-black text-4xl text-white tracking-tighter uppercase">DualTube</h2>
+             <div class="h-1 w-12 bg-dynamic mt-3 rounded-full shadow-[0_0_15px_var(--active-color)] opacity-80"></div>
+           </div>
+           <div class="text-right">
+             <span id="watched-counter" class="font-bold text-3xl text-white/10">0</span>
+             <p class="text-[9px] font-mono text-white/20 uppercase tracking-widest mt-1">Sinais Vistos</p>
+           </div>
+         </div>
+         
+         <!-- CAROUSEL CONTAINER -->
+         <div id="video-list" class="flex-1 overflow-y-auto thin-scroll space-y-10 pr-2">
+           <!-- Injected by JS -->
+         </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- NAVIGATION DOTS -->
+  <div class="fixed bottom-8 left-1/2 -translate-x-1/2 z-40 flex gap-4 p-4 bg-black/60 backdrop-blur-xl rounded-full border border-white/5 shadow-2xl">
+    <div id="dot-0" class="w-1.5 h-1.5 rounded-full bg-white/20 transition-all duration-500"></div>
+    <div id="dot-1" class="w-8 h-1.5 rounded-full bg-dynamic shadow-[0_0_12px_var(--active-color)] transition-all duration-500 opacity-90"></div>
+    <div id="dot-2" class="w-1.5 h-1.5 rounded-full bg-white/20 transition-all duration-500"></div>
+  </div>
+
+  <!-- PLAYER OVERLAY -->
+  <div id="player-modal" class="fixed inset-0 z-[60] bg-black/95 hidden opacity-0 transition-opacity duration-500 flex flex-col">
+    <div class="flex justify-between items-center p-6 border-b border-white/5 bg-black">
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+        <span class="font-mono text-[10px] text-white/50 uppercase tracking-widest">Sinal Seguro</span>
+      </div>
+      <button onclick="DualTube.close()" class="glass-pill px-4 py-1.5 text-[10px] font-bold uppercase hover:bg-white/10 transition text-white/70">Fechar</button>
+    </div>
+    <div class="flex-1 flex items-center justify-center p-4">
+      <div id="player-embed-container" class="w-full max-w-5xl aspect-video bg-[#050505] rounded-2xl overflow-hidden shadow-2xl border border-white/10"></div>
+    </div>
+  </div>
+
+  <!-- INFODOSE PILL (FLOATING) -->
+  <div id="infodose-float-container"></div>
+
+  <!-- GENERIC MODAL -->
+  <div id="generic-modal" class="fixed inset-0 z-[70] bg-black/80 backdrop-blur-lg hidden items-center justify-center p-4 transition-all opacity-0">
+    <div id="generic-modal-content" class="glass-card w-full max-w-lg p-8 transform scale-95 transition-all bg-[#0a0a0a] border border-white/10"></div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[80] pointer-events-none flex flex-col gap-2 w-max items-center"></div>
+
+  <script>
+    /* ================= CORE KEYS ================= */
+    const KEYS = {
+      USER: 'di_userName',
+      INFODOSE: 'di_infodoseName',
+      CRYSTALS: 'di_cristalizados',
+      ARCHETYPE_STATE: 'di_activeArchetype',
+      STATS: 'di_videoStats',
+      TRAINING: 'di_trainingText'
+    };
+
+    /* --- DATA SOURCE --- */
+    const VOID_THEME = { color: "#E5E5E5", quote: "O vazio é o campo de todas as possibilidades.", desc: "Sistema em Repouso", vid: "Bt_rLbMjJDk" };
+
+    const ARCHETYPES = {
+      "ATLAS": { color: "#38BDF8", quote: "A estrutura precede o sucesso.", vid: "Bt_rLbMjJDk", desc: "Ordem & Construção" },
+      "NOVA": { color: "#F97316", quote: "Itere rápido, falhe rápido, vença.", vid: "qldgs0aLdB0", desc: "Inovação & Fluxo" },
+      "VITALIS": { color: "#22C55E", quote: "O corpo sabe antes da mente duvidar.", vid: "_0wVkryxanE", desc: "Vitalidade & Força" },
+      "PULSE": { color: "#EC4899", quote: "Sincronize com o ritmo do caos.", vid: "Id2NI9tv1r4", desc: "Ritmo & Emoção" },
+      "ARTEMIS": { color: "#A855F7", quote: "Defina o alvo. O resto é ruído.", vid: "FbutKMpd8MY", desc: "Foco & Caça" },
+      "SERENA": { color: "#38BDF8", quote: "No centro do furacão, existe um ponto imóvel.", vid: "hfQ1L6fCfAo", desc: "Paz & Harmonia" },
+      "KAOS": { color: "#FACC15", quote: "Quebre para reconstruir melhor.", vid: "Tq99vQNQ6dQ", desc: "Entropia & Mudança" },
+      "GENUS": { color: "#E5E7EB", quote: "A excelência habita nos detalhes.", vid: "DTDfkHwuMic", desc: "Criação & Arte" },
+      "LUMINE": { color: "#FDE047", quote: "Irradie sem medo.", vid: "1L9_rFmIGJ8", desc: "Brilho & Carisma" },
+      "SOLUS": { color: "#0EA5E9", quote: "O silêncio revela a verdade.", vid: "qldgs0aLdB0", desc: "Vazio & Verdade" },
+      "RHEA": { color: "#22C55E", quote: "Nutra a raiz e o fruto virá.", vid: "Bt_rLbMjJDk", desc: "Cuidado & Raiz" },
+      "HORUS": { color: "#5500FF", quote: "Observe o todo antes de agir.", vid: "_0wVkryxanE", desc: "Visão & Estratégia" },
+      "AION": { color: "#4F46E5", quote: "O tempo não é linear.", vid: "Id2NI9tv1r4", desc: "Tempo & Evolução" }
+    };
+
+    const MICRO_SCRIPTS = {
+        ATLAS: { open: "Erga-se. A estrutura do seu império começa agora.", ritual: "Respire fundo e visualize uma coluna de luz sustentando suas costas." },
+        NOVA: { open: "E aí! O universo tá cheio de glitches esperando nossa correção criativa.", ritual: "Estale os dedos três vezes e sorria para o nada." },
+        VITALIS: { open: "Sem hesitação. O tempo é agora e a energia está no pico.", ritual: "Três respirações explosivas. Sinta o sangue acordar." },
+        PULSE: { open: "Sente o ritmo? O dia já começou a tocar nossa música.", ritual: "Feche os olhos e encontre a batida do seu coração." },
+        ARTEMIS: { open: "Curso traçado. O horizonte nos chama, capitão.", ritual: "Olhe para o ponto mais distante que conseguir ver." },
+        LUMINE: { open: "Olha quanto brilho! Hoje vamos iluminar cada canto escuro.", ritual: "Imagine uma luz dourada saindo do seu peito." },
+        SERENA: { open: "Calma. O mundo lá fora gira, mas aqui dentro há paz.", ritual: "Uma mão no peito, outra na barriga." },
+        KAOS: { open: "Quebre o padrão. A ordem é só uma ilusão.", ritual: "Faça um movimento brusco e inesperado." },
+        GENUS: { open: "Precisão. Cada detalhe importa na obra que somos.", ritual: "Observe um objeto próximo por 10 segundos." },
+        RHEA: { open: "Bem-vindo de volta. O dia te recebe com um abraço suave.", ritual: "Abrace a si mesmo por um instante." },
+        SOLUS: { open: "No vazio, a verdade ecoa.", ritual: "Fique em silêncio absoluto até ouvir o som da sala." },
+        HORUS: { open: "Visão panorâmica ativada. Estratégia definida.", ritual: "Visualize seu dia inteiro em um segundo." },
+        AION: { open: "O tempo é apenas uma variável.", ritual: "Visualize o futuro como se fosse uma memória." }
+    };
+
+    let STATE = {
+      screen: 1,
+      crystals: [],
+      activeArch: null
+    };
+
+    /* ================= INIT ================= */
+    window.onload = () => {
+      document.getElementById('boot-bar').style.width = '100%';
+      setTimeout(() => {
+        document.getElementById('boot-screen').style.opacity = '0';
+        setTimeout(()=>document.getElementById('boot-screen').remove(), 1000);
+        
+        initSystem();
+        initWelcome();
+      }, 1500);
+      
+      initFloatingButton();
+    };
+
+    function initSystem() {
+      lucide.createIcons();
+      loadData();
+      ArchetypeSystem.apply(STATE.activeArch, false); 
+      Cortex.render();
+      DualTube.render();
+      setupGestures();
+      
+      // Identity Sync
+      const pilotName = localStorage.getItem(KEYS.USER) || 'PILOTO';
+      document.getElementById('displayUserHeader').innerText = pilotName.toUpperCase();
+      
+      const sysName = localStorage.getItem(KEYS.INFODOSE) || 'DUAL';
+      document.getElementById('header-sys-name').innerText = sysName.toUpperCase();
+      document.getElementById('hero-title').innerText = sysName.toUpperCase();
+    }
+
+    function initWelcome() {
+        const name = localStorage.getItem(KEYS.USER) || 'Piloto';
+        const arche = STATE.activeArch;
+        let msg = arche ? `Sincronizado: ${arche}` : `Bem-vindo, ${name}`;
+        Toast.show(msg);
+    }
+
+    function loadData() {
+      // Load Crystals
+      const storedCrystals = localStorage.getItem(KEYS.CRYSTALS);
+      try { STATE.crystals = storedCrystals ? JSON.parse(storedCrystals) : [{id:1, txt:"Inicialização do Sistema.", tags:["log"], pin:true}]; } 
+      catch(e) { STATE.crystals = []; }
+      
+      // Load Arch
+      const storedArch = localStorage.getItem(KEYS.ARCHETYPE_STATE);
+      if(storedArch && ARCHETYPES[storedArch]) STATE.activeArch = storedArch;
+    }
+
+    function saveData() {
+      localStorage.setItem(KEYS.CRYSTALS, JSON.stringify(STATE.crystals));
+      if(STATE.activeArch) localStorage.setItem(KEYS.ARCHETYPE_STATE, STATE.activeArch);
+      else localStorage.removeItem(KEYS.ARCHETYPE_STATE);
+    }
+
+    /* ================= NAVIGATION ================= */
+    const Navigation = {
+      to: (idx) => {
+        STATE.screen = idx;
+        const viewport = document.getElementById('universe-viewport');
+        viewport.style.transform = `translateX(-${idx * 100}vw)`;
+        
+        [0,1,2].forEach(i => {
+          const el = document.getElementById(`dot-${i}`);
+          if(i === idx) {
+            el.className = "w-8 h-1.5 rounded-full shadow-[0_0_10px_var(--active-color)] transition-all duration-500 opacity-90";
+            el.style.backgroundColor = "var(--active-color)";
+          } else {
+            el.className = "w-1.5 h-1.5 rounded-full bg-white/20 transition-all duration-500";
+            el.style.backgroundColor = "";
+          }
+        });
+      }
+    };
+
+    function setupGestures() {
+      let tsX = 0, tsY = 0;
+      document.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; }, {passive:true});
+      document.addEventListener('touchend', e => {
+        const dX = tsX - e.changedTouches[0].clientX;
+        const dY = tsY - e.changedTouches[0].clientY;
+        if(Math.abs(dX) > 60 && Math.abs(dX) > Math.abs(dY)*1.5) {
+          if(dX > 0 && STATE.screen < 2) Navigation.to(STATE.screen + 1);
+          if(dX < 0 && STATE.screen > 0) Navigation.to(STATE.screen - 1);
+        }
+      }, {passive:true});
+    }
+
+    /* ================= ARCHETYPE SYSTEM ================= */
+    const ArchetypeSystem = {
+      apply: (key, showToast = true) => {
+        STATE.activeArch = key; 
+        saveData();
+
+        const data = ARCHETYPES[key] || VOID_THEME;
+        const isVoid = !key;
+        const r = document.querySelector(':root');
+        
+        r.style.setProperty('--active-color', data.color);
+        r.style.setProperty('--active-glow', isVoid ? 'rgba(255,255,255,0.05)' : data.color + '26'); 
+        
+        // Atmosphere Update
+        document.getElementById('glow-top').style.backgroundColor = data.color;
+        
+        // Text Updates
+        document.getElementById('archetype-status-text').innerText = key ? `FREQUÊNCIA: ${key}` : "FREQUÊNCIA BASE";
+        document.getElementById('displayArchetypeBadge').innerText = key || "...";
+        document.getElementById('card-arch-name').innerText = key || "Standby";
+        document.getElementById('drk-quote').innerText = `"${data.quote}"`;
+
+        // Recommendation Update
+        const recImg = document.getElementById('suggestion-thumb');
+        const vidId = data.vid;
+        recImg.src = `https://img.youtube.com/vi/${vidId}/maxresdefault.jpg`;
+        document.getElementById('video-suggestion-card').onclick = () => DualTube.play(vidId, isVoid ? "Frequência Base" : `Recomendação ${key}`);
+
+        if(showToast && key) Toast.show(`Sincronizado: ${key}`);
+      },
+      
+      toggleMenu: () => { Infodose.open(); }
+    };
+
+    /* ================= CORTEX (MEMORY) ================= */
+    const Cortex = {
+      switch: (view) => {
+        const p1 = document.getElementById('panel-crystals');
+        const p2 = document.getElementById('panel-matrices');
+        const b1 = document.getElementById('tab-crystals');
+        const b2 = document.getElementById('tab-matrices');
+
+        if(view === 'crystals') {
+          p1.classList.remove('hidden'); p2.classList.add('hidden');
+          b1.className = "px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all bg-white/10 text-white shadow-lg";
+          b2.className = "px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all text-white/40 hover:text-white";
+        } else {
+          p1.classList.add('hidden'); p2.classList.remove('hidden'); p2.style.display = 'flex';
+          b2.className = "px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all bg-white/10 text-white shadow-lg";
+          b1.className = "px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all text-white/40 hover:text-white";
+        }
+      },
+
+      render: () => {
+        const container = document.getElementById('crystal-container');
+        const q = (document.getElementById('memory-search').value || '').toLowerCase();
+        
+        const filtered = STATE.crystals.filter(c => c.txt.toLowerCase().includes(q) || (c.tags && c.tags.some(t=>t.includes(q))));
+        
+        container.innerHTML = filtered.length ? filtered.map(c => `
+          <div class="memory-card relative group ${c.pin ? 'pinned' : 'border-white/5'}">
+            <div class="flex justify-between items-start mb-2">
+              <div class="flex gap-2">
+                ${c.tags.map(t => `<span class="px-2 py-0.5 rounded text-[8px] bg-white/5 text-white/50 uppercase tracking-wider">${t}</span>`).join('')}
+              </div>
+              <div class="flex gap-3 opacity-20 group-hover:opacity-100 transition">
+                <button onclick="Cortex.togglePin(${c.id})" class="hover:text-dynamic"><i data-lucide="pin" class="w-3 h-3 ${c.pin?'fill-current text-dynamic':''}"></i></button>
+                <button onclick="Cortex.del(${c.id})" class="hover:text-red-400"><i data-lucide="trash" class="w-3 h-3"></i></button>
+              </div>
+            </div>
+            <p class="text-sm text-white/80 font-medium leading-relaxed font-sans">"${c.txt}"</p>
+          </div>
+        `).join('') : `<div class="text-center py-20 opacity-20 text-[10px] font-mono uppercase tracking-widest">Sem registros</div>`;
+        lucide.createIcons();
+      },
+
+      openNewMemory: () => {
+        Modal.open(`
+          <h3 class="font-bold text-lg text-white mb-4 tracking-wide">Novo Cristal</h3>
+          <textarea id="new-mem-input" class="w-full h-32 bg-white/5 rounded-xl p-4 text-xs text-white focus:bg-white/10 transition resize-none mb-3 border border-white/10 outline-none" placeholder="O que você aprendeu?"></textarea>
+          <input id="new-mem-tags" class="w-full bg-white/5 rounded-xl p-3 text-xs text-white mb-4 border border-white/10 outline-none" placeholder="Tags (sep. por vírgula)">
+          <div class="flex justify-end gap-2">
+            <button onclick="Modal.close()" class="px-4 py-2 rounded-lg text-[10px] font-bold text-white/40 hover:text-white transition uppercase">Cancelar</button>
+            <button onclick="Cortex.saveMemory()" class="px-6 py-2 rounded-lg bg-white/5 text-dynamic border border-dynamic/30 hover:bg-dynamic/10 text-[10px] font-bold uppercase transition tracking-wider">Cristalizar</button>
+          </div>
+        `);
+        setTimeout(() => document.getElementById('new-mem-input').focus(), 100);
+      },
+
+      saveMemory: () => {
+        const txt = document.getElementById('new-mem-input').value;
+        const tags = document.getElementById('new-mem-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+        if(!txt) return;
+        
+        STATE.crystals.unshift({ id: Date.now(), txt, tags, pin: false });
+        saveData(); Cortex.render(); Modal.close(); Toast.show('Memória Cristalizada');
+      },
+
+      del: (id) => {
+        STATE.crystals = STATE.crystals.filter(c => c.id !== id);
+        saveData(); Cortex.render();
+      },
+
+      togglePin: (id) => {
+        const c = STATE.crystals.find(x => x.id === id);
+        if(c) c.pin = !c.pin;
+        saveData(); Cortex.render();
+      }
+    };
+
+    /* ================= DUALTUBE (CAROUSEL) ================= */
+    const DualTube = {
+      cats: [
+        { title: "Frequências", desc: "Ambientação & Estado de Fluxo", ids: ["Bt_rLbMjJDk", "_0wVkryxanE", "Id2NI9tv1r4"] },
+        { title: "Arquitetura", desc: "Construção Mental & Foco", ids: ["qldgs0aLdB0", "FbutKMpd8MY", "1L9_rFmIGJ8"] },
+        { title: "Expansão", desc: "Filosofia & Horizonte", ids: ["hfQ1L6fCfAo", "Tq99vQNQ6dQ", "DTDfkHwuMic"] }
+      ],
+
+      render: () => {
+        const container = document.getElementById('video-list');
+        const stats = JSON.parse(localStorage.getItem(KEYS.STATS) || '{}');
+        const count = Object.keys(stats).length;
+        document.getElementById('watched-counter').innerText = count;
+
+        container.innerHTML = DualTube.cats.map(cat => `
+          <div class="animate-[fadeIn_0.5s_ease]">
+            <div class="mb-4 pl-1 border-l-2 border-white/5">
+              <h3 class="text-[10px] font-black uppercase tracking-[0.25em] text-white/80 ml-4">${cat.title}</h3>
+              <p class="text-[8px] uppercase tracking-widest text-white/30 ml-4 mt-1">${cat.desc}</p>
+            </div>
+            <div class="video-row snap-x">
+              ${cat.ids.map(id => `
+                <div onclick="DualTube.play('${id}', '${cat.title}')" class="video-card group cursor-pointer snap-start ${stats[id] ? 'watched' : 'border-white/5'}">
+                  <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" class="w-full h-32 object-cover opacity-60 group-hover:opacity-100 transition duration-500 grayscale group-hover:grayscale-0">
+                  <div class="absolute inset-0 bg-black/40 group-hover:bg-transparent transition flex items-center justify-center">
+                    <div class="w-8 h-8 rounded-full bg-white/10 backdrop-blur flex items-center justify-center group-hover:bg-dynamic group-hover:text-black transition">
+                      <i data-lucide="play" class="w-3 h-3 fill-current ml-0.5"></i>
+                    </div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+        lucide.createIcons();
+      },
+
+      play: (id, cat) => {
+        const modal = document.getElementById('player-modal');
+        const container = document.getElementById('player-embed-container');
+        container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&controls=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+
+        const stats = JSON.parse(localStorage.getItem(KEYS.STATS) || '{}');
+        stats[id] = Date.now();
+        localStorage.setItem(KEYS.STATS, JSON.stringify(stats));
+        DualTube.render();
+      },
+
+      close: () => {
+        const modal = document.getElementById('player-modal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => {
+          modal.classList.add('hidden');
+          document.getElementById('player-embed-container').innerHTML = '';
+        }, 500);
+      }
+    };
+
+    /* ================= ORB DRAG ================= */
+    const OrbDrag = {
+      active: false, startX: 0, el: null,
+      start: function(e) {
+        this.active = true;
+        this.startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        this.el = document.getElementById('orb-area').querySelector('.orb-core'); // Rotate inner core
+        
+        const move = (ev) => {
+          if(!this.active) return;
+          const x = ev.type.includes('mouse') ? ev.clientX : ev.touches[0].clientX;
+          const delta = (x - this.startX) / 4; 
+          this.el.style.transform = `rotate(${delta}deg)`;
+        };
+        const end = () => {
+          if(!this.active) return;
+          this.active = false;
+          // Simple check for swipe direction based on rotation amount
+          const currentRot = this.el.style.transform.replace(/[^0-9\-.,]/g, '');
+          if(currentRot > 45 && STATE.screen > 0) Navigation.to(STATE.screen - 1);
+          if(currentRot < -45 && STATE.screen < 2) Navigation.to(STATE.screen + 1);
+          this.el.style.transform = 'rotate(0deg)';
+          
+          document.removeEventListener('mousemove', move);
+          document.removeEventListener('mouseup', end);
+          document.removeEventListener('touchmove', move);
+          document.removeEventListener('touchend', end);
+        };
+        
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', end);
+        document.addEventListener('touchmove', move, {passive: false});
+        document.addEventListener('touchend', end);
+      }
+    };
+
+    /* ================= INFODOSE ================= */
+    const Infodose = {
+      open: () => {
+        let trainingTxt = `Treinamento A.Infodose v1.0\n\n-- MICRO-SCRIPTS --\n`;
+        Object.keys(MICRO_SCRIPTS).forEach(k => {
+           trainingTxt += `\n[${k}]\n"${MICRO_SCRIPTS[k].open}"\n`;
+        });
+        
+        const copyToClip = () => { navigator.clipboard.writeText(trainingTxt); Toast.show('Scripts Copiados'); };
+
+        const html = `
+          <h3 class="font-bold text-lg text-white mb-2 tracking-wide">Frequência do Sistema</h3>
+          <p class="text-[10px] text-white/40 mb-5 uppercase tracking-widest">Sincronização de Arquétipo</p>
+          
+          <div class="space-y-2 max-h-60 overflow-y-auto thin-scroll pr-1 mb-6">
+             <!-- Reset -->
+             <div onclick="ArchetypeSystem.apply(null); Modal.close()" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer border border-white/5 flex items-center justify-between group transition">
+                 <span class="text-[10px] font-bold text-white/60 group-hover:text-white uppercase">Modo Neutro</span>
+                 ${!STATE.activeArch ? `<div class="w-1.5 h-1.5 rounded-full bg-white"></div>` : ''}
+             </div>
+
+             ${Object.keys(ARCHETYPES).map(k => `
+               <div onclick="ArchetypeSystem.apply('${k}'); Modal.close()" class="p-3 rounded-xl bg-white/5 hover:bg-white/10 cursor-pointer border-l-2 border-[${ARCHETYPES[k].color}] border-t border-r border-b border-white/5 flex items-center justify-between group transition">
+                 <span class="text-[10px] font-bold text-white group-hover:text-[${ARCHETYPES[k].color}] uppercase tracking-wide">${k}</span>
+                 ${STATE.activeArch === k ? `<div class="w-1.5 h-1.5 rounded-full bg-[${ARCHETYPES[k].color}] shadow-[0_0_8px_${ARCHETYPES[k].color}]"></div>` : ''}
+               </div>
+             `).join('')}
+          </div>
+          
+          <div class="flex gap-3">
+             <button onclick="Modal.close()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] uppercase font-bold text-white/40 transition">Fechar</button>
+             <button onclick="${copyToClip}" class="flex-1 py-3 bg-white/5 border border-dynamic/30 hover:bg-dynamic/10 rounded-xl text-[10px] uppercase font-bold text-dynamic transition tracking-wider">Copiar Scripts</button>
+          </div>
+        `;
+        Modal.open(html);
+      }
+    };
+
+    function initFloatingButton() {
+        setTimeout(() => {
+            const btn = document.createElement('div');
+            btn.style.cssText = 'position:fixed; left:50%; transform:translateX(-50%); top:105px; z-index:45;';
+            btn.innerHTML = `<button onclick="Infodose.open()" class="glass-pill w-10 h-10 flex items-center justify-center rounded-full border-dynamic/20 text-dynamic hover:bg-white/10 transition cursor-pointer shadow-2xl backdrop-blur-md group"><i data-lucide="aperture" class="w-4 h-4 group-hover:rotate-180 transition duration-700"></i></button>`;
+            document.getElementById('infodose-float-container').appendChild(btn);
+            lucide.createIcons();
+        }, 1200);
+    }
+
+    /* ================= UTILS ================= */
+    const Modal = {
+      open: (contentHtml) => {
+        const m = document.getElementById('generic-modal');
+        const c = document.getElementById('generic-modal-content');
+        c.innerHTML = contentHtml;
+        m.classList.remove('hidden');
+        m.classList.add('flex');
+        setTimeout(() => { m.classList.remove('opacity-0'); c.classList.remove('scale-95'); }, 10);
+      },
+      close: () => {
+        const m = document.getElementById('generic-modal');
+        const c = document.getElementById('generic-modal-content');
+        m.classList.add('opacity-0'); c.classList.add('scale-95');
+        setTimeout(() => { m.classList.remove('flex'); m.classList.add('hidden'); }, 300);
+      }
+    };
+
+    const Toast = {
+      show: (msg) => {
+        const c = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = "glass-pill px-6 py-3 rounded-full text-[10px] font-bold uppercase tracking-[0.15em] text-dynamic shadow-2xl border border-dynamic/20 bg-black/80 backdrop-blur-xl animate-[float_4s_ease-in-out_infinite]";
+        el.innerText = msg;
+        c.appendChild(el);
+        setTimeout(() => { el.style.opacity = '0'; el.style.transform = 'translateY(20px)'; setTimeout(() => el.remove(), 600); }, 3500);
+      }
+    };
+  </script>
+</body>
+</html>
+
+
