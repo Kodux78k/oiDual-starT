@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Fusion OS v27 — Premium Dual (Upgraded)</title>
+
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#050505">
+
+  <!-- libs -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* -------------------------
+       ROOT — dynamic theme vars
+       ------------------------- */
+    :root {
+      --bg: #050505;
+      --active-color: #38BDF8;
+      --active-glow: rgba(56,189,248,0.18);
+      --accent-secondary: #0EA5E9;
+    }
+
+    /* BASE */
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+    html,body { height:100%; margin:0; padding:0; background:var(--bg); color:#fff; font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, Arial; }
+    button { cursor: pointer; }
+    a { color: inherit; text-decoration: none; }
+
+    /* Ambient glows */
+    .ambient-glow { position: fixed; pointer-events: none; z-index: 0; border-radius: 50%; filter: blur(100px); transition: background 1.2s ease, opacity 1.2s ease; }
+    #glow-top { top: -20%; left: -20%; width: 80vw; height: 80vw; background: var(--active-color); opacity: 0.15; }
+    #glow-bottom { bottom: -20%; right: -20%; width: 80vw; height: 80vw; background: var(--accent-secondary); opacity: 0.1; }
+
+    /* Viewport: horizontally arranged panels by default (DUAL-ready) */
+    #universe-viewport {
+      display: flex;
+      width: 300vw;
+      height: 100vh;
+      transform: translateX(-100vw);
+      transition: transform 0.5s cubic-bezier(0.2,0.9,0.2,1);
+      position: relative; z-index: 10;
+    }
+    .screen-panel { width:100vw; height:100vh; flex-shrink:0; position:relative; overflow:hidden; }
+
+    /* NAV dots */
+    #nav-indicator { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display:flex; gap:10px; z-index:100; pointer-events:none; }
+    .dot { width:6px; height:6px; border-radius:999px; background:rgba(255,255,255,0.2); transition:0.4s; }
+    .dot.active { width:30px; background:var(--active-color); border-radius:10px; box-shadow:0 0 10px var(--active-glow); }
+
+    /* glass / cards */
+    .glass-card { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.05); border-radius:20px; padding:16px; }
+    .glass-pill { background: rgba(255,255,255,0.04); border-radius:14px; padding:6px 12px; border:1px solid rgba(255,255,255,0.08); display:inline-flex; align-items:center; gap:8px; }
+
+    /* player global */
+    #global-player {
+      position: fixed; right: 18px; bottom: 18px; z-index: 1200;
+      width: 340px; max-width: calc(100vw - 40px); height: 192px; border-radius:14px;
+      background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); border:1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 12px 40px rgba(0,0,0,0.6); overflow: hidden; display: none;
+      transition: transform .25s ease, opacity .25s ease;
+    }
+    #global-player.mini { width: 220px; height: 60px; right: 18px; bottom: 18px; display:flex; align-items:center; gap:12px; padding:8px; }
+    #global-player iframe { width:100%; height:100%; border:0; display:block; }
+
+    #global-player .player-meta { padding: 10px; font-size: 12px; display:flex; align-items:center; gap:10px; }
+    #global-player .player-controls { position:absolute; top:8px; right:8px; display:flex; gap:8px; }
+
+    /* dynamic app container (sandbox) */
+    #dynamic-app-container { width:100%; height:100%; border-radius:14px; overflow:hidden; background:#060606; }
+
+    /* ui-modes: UNO (vertical scroll), DUAL (split), TRINITY (three columns) */
+    :root[data-uinode="UNO"] #universe-viewport {
+      display: block; width: 100vw; height: 300vh; transform: none;
+    }
+    :root[data-uinode="UNO"] .screen-panel { width: 100%; height: 100vh; display:block; }
+    :root[data-uinode="DUAL"] #universe-viewport { display:flex; transform: translateX(0); }
+    :root[data-uinode="DUAL"] .screen-panel { width: 50vw; } /* left+right visible (Nexus | DualTube) */
+    :root[data-uinode="DUAL"] #view-nexus { order:0; }
+    :root[data-uinode="DUAL"] #view-dualtube { order:1; }
+    :root[data-uinode="TRINITY"] #universe-viewport { display:flex; transform: translateX(0); }
+    :root[data-uinode="TRINITY"] .screen-panel { width: calc(100vw / 3); } /* three panels simultaneously */
+
+    /* responsiveness adjustments */
+    @media (max-width:900px) {
+      :root[data-uinode="DUAL"] .screen-panel { width: 100vw; } /* mobile fallback */
+      :root[data-uinode="TRINITY"] .screen-panel { width:100vw; } /* mobile fallback */
+      #global-player { display:none !important; }
+    }
+
+    /* small utilities */
+    .hidden { display:none !important; }
+    .pointer-auto { pointer-events: auto; }
+
+  </style>
+</head>
+<body data-uinode="DUAL">
+
+  <!-- ambient -->
+  <div id="glow-top" class="ambient-glow"></div>
+  <div id="glow-bottom" class="ambient-glow"></div>
+
+  <!-- HEADER: added UI mode controls and kept Infodose -->
+  <header class="fixed top-0 left-0 right-0 z-[200] px-6 py-8 flex justify-between items-center pointer-events-none select-none">
+    <div class="pointer-auto glass-pill flex items-center gap-3" onclick="Identity.openInfodoseModal()">
+      <div id="header-dot" style="width:8px;height:8px;border-radius:999px;background:var(--active-color);box-shadow:0 0 8px var(--active-color)"></div>
+      <div id="displayUserHeader" style="font-weight:800;font-size:11px;letter-spacing:.08em">PILOTO</div>
+    </div>
+
+    <div class="pointer-auto flex items-center gap-3">
+      <!-- MODE SWITCH -->
+      <div class="glass-pill flex items-center gap-2 px-2 py-1">
+        <button class="text-xs uppercase font-bold" onclick="UI.setMode('UNO')">UNO</button>
+        <button class="text-xs uppercase font-bold" onclick="UI.setMode('DUAL')">DUAL</button>
+        <button class="text-xs uppercase font-bold" onclick="UI.setMode('TRINITY')">TRINITY</button>
+      </div>
+
+      <div class="glass-pill px-3 py-1 pointer-auto" onclick="Identity.showInfodoseModal()">
+        <span id="displayArchetypeBadge" style="font-weight:800;font-size:11px">...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- UNIVERSE VIEWPORT: three main screens -->
+  <div id="universe-viewport">
+
+    <!-- SCREEN 0: CORTEX -->
+    <section class="screen-panel" id="view-cortex">
+      <div style="padding:88px 32px 32px; max-width:1200px; margin:0 auto; height:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px;">
+          <div>
+            <h2 style="font-size:32px; font-weight:900; letter-spacing:-0.02em; margin:0">Córtex</h2>
+            <p style="font-size:11px; color:rgba(255,255,255,0.35); text-transform:uppercase; margin-top:6px;">Arquivo de Consciência</p>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onclick="Cortex.switch('crystals')" id="tab-crystals" class="glass-pill pointer-auto">Memórias</button>
+            <button onclick="Cortex.switch('matrices')" id="tab-matrices" class="glass-pill pointer-auto">Matrizes</button>
+          </div>
+        </div>
+
+        <div id="cortex-body" style="margin-top:22px; height:calc(100% - 80px); display:flex; flex-direction:column;">
+          <div id="panel-crystals" style="flex:1; overflow:auto; padding-right:8px;">
+            <div style="display:flex; gap:8px; margin-bottom:14px;">
+              <div style="flex:1;" class="glass-card">
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <i data-lucide="search" class="w-4 h-4 text-white/30"></i>
+                  <input id="memory-search" oninput="Cortex.render()" placeholder="Acessar registros..." style="background:transparent;border:none;color:inherit;width:100%;outline:none" />
+                </div>
+              </div>
+              <button onclick="Cortex.openNewMemory()" class="glass-pill">Fixar</button>
+            </div>
+
+            <div id="crystal-container" style="display:flex;flex-direction:column;gap:12px;"></div>
+          </div>
+
+          <div id="panel-matrices" class="hidden" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+            <div class="glass-card" style="padding:24px; max-width:760px; text-align:center;">
+              <p style="font-weight:700; text-transform:uppercase; color:rgba(255,255,255,0.4); font-size:10px;">Editor de Matrizes</p>
+              <textarea id="matrix-editor" style="width:100%;height:220px;margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,0.04);border-radius:12px;padding:12px;color:inherit; resize:none;"></textarea>
+              <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:12px;">
+                <button onclick="Cortex.saveActiveMatrix()" class="glass-pill">Salvar</button>
+                <button onclick="Cortex.exportMatrix()" class="glass-pill">Exportar</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 1: NEXUS (Home / Orb / dynamic scroll) -->
+    <section class="screen-panel" id="view-nexus">
+      <div style="height:100%; overflow:auto; padding:88px 32px 32px;">
+        <!-- ORB HERO -->
+        <div style="height:60vh; display:flex; align-items:center; justify-content:center; flex-direction:column;">
+          <div id="orbClickable" style="width:360px; height:360px; display:flex; align-items:center; justify-content:center; cursor:grab;" onmousedown="OrbDrag.start(event)" ontouchstart="OrbDrag.start(event)">
+            <svg width="100%" height="100%" viewBox="0 0 200 200">
+              <defs>
+                <linearGradient id="orbGradX" x1="0" x2="1">
+                  <stop offset="0" stop-color="#fff" stop-opacity="0.8" />
+                  <stop offset="1" stop-color="#fff" stop-opacity="0.2" />
+                </linearGradient>
+              </defs>
+              <circle cx="100" cy="100" r="85" stroke="url(#orbGradX)" stroke-width="1.5" fill="none" opacity="0.3"/>
+              <circle cx="100" cy="100" r="60" stroke="url(#orbGradX)" stroke-width="0.5" fill="none" opacity="0.12"/>
+              <path d="M100 15 A85 85 0 0 0 100 185" stroke="url(#orbGradX)" stroke-width="4" fill="none" stroke-linecap="round"/>
+              <circle cx="100" cy="100" r="10" fill="var(--active-color)" style="filter:drop-shadow(0 0 12px var(--active-color));" />
+            </svg>
+          </div>
+          <h1 id="hero-title" style="margin-top:18px; font-size:44px; font-weight:900; letter-spacing:-0.02em;">DUAL</h1>
+        </div>
+
+        <!-- STATUS + RECOMMENDATION -->
+        <div style="max-width:1200px; margin:0 auto; display:flex; gap:16px; align-items:flex-start;">
+          <div style="flex:1;">
+            <div class="glass-card" style="padding:20px;">
+              <h3 style="margin:0 0 10px 0; font-weight:900;">Sinais</h3>
+              <p id="archetype-status-text" style="color:rgba(255,255,255,0.35); margin:0;">AGUARDANDO SINCRONIZAÇÃO</p>
+              <div style="margin-top:12px;">
+                <div id="archetype-video-suggestion" class="glass-card" style="height:180px; overflow:hidden; position:relative; cursor:pointer; display:flex; align-items:center; justify-content:center;">
+                  <div style="color:rgba(255,255,255,0.5);">Sintonizando...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="width:360px;">
+            <div class="glass-card" style="padding:14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:10px; color:rgba(255,255,255,0.35)">Curadoria</div>
+                  <div id="drk-line" style="font-style:italic; margin-top:8px;">"O sistema responde ao silêncio."</div>
+                </div>
+                <div>
+                  <button class="glass-pill" onclick="UI.openDynamicArea()">Abrir Área Dinâmica</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="glass-card" style="padding:12px; margin-top:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-size:10px; color:rgba(255,255,255,0.35)">DualTube</div>
+                  <div id="dt-watched-count" style="font-weight:900; font-size:20px; margin-top:6px;">0</div>
+                </div>
+                <div>
+                  <button class="glass-pill" onclick="Navigation.to(2)">Ir para DualTube</button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- SCREEN 2: DUALTUBE -->
+    <section class="screen-panel" id="view-dualtube">
+      <div style="padding:88px 32px 56px; max-width:1200px; margin:0 auto;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+          <div>
+            <h2 style="font-size:32px; font-weight:900; margin:0;">DualTube</h2>
+            <p style="font-size:10px; color:rgba(255,255,255,0.4); text-transform:uppercase; margin-top:6px;">Curadoria de Sinais</p>
+          </div>
+          <div style="text-align:right;">
+            <div id="dt-watched-count-duplicate" style="font-weight:900; font-size:20px; color:rgba(255,255,255,0.12);">0</div>
+            <p style="font-size:9px; color:rgba(255,255,255,0.3); text-transform:uppercase;">Vídeos</p>
+          </div>
+        </div>
+
+        <div id="video-categories" style="margin-top:18px; display:flex; flex-direction:column; gap:28px;"></div>
+
+        <div style="margin-top:28px;">
+          <h4 style="font-size:12px; color:rgba(255,255,255,0.4);">Área Dinâmica (apps / HTML carregado em runtime)</h4>
+          <div class="glass-card" style="height:320px; margin-top:12px;">
+            <div id="dynamic-app-container" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;">
+              <div style="text-align:center;color:rgba(255,255,255,0.14);">Nenhuma aplicação carregada. Use <code>UI.loadExternalHTML(url)</code>.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- NAV -->
+  <div id="nav-indicator" class="pointer-events-none">
+    <div class="dot" id="dot-0"></div>
+    <div class="dot active" id="dot-1"></div>
+    <div class="dot" id="dot-2"></div>
+  </div>
+
+  <!-- GLOBAL PLAYER (persistent) -->
+  <div id="global-player" class="hidden" aria-hidden="true">
+    <div id="player-frame-wrap" style="width:100%; height:100%;"></div>
+    <div class="player-meta hidden" id="player-meta"></div>
+    <div class="player-controls pointer-auto" style="position:absolute; right:8px; top:8px;">
+      <button onclick="Player.minimize()" class="glass-pill" title="Minimizar">—</button>
+      <button onclick="Player.stop()" class="glass-pill" title="Parar">✕</button>
+    </div>
+  </div>
+
+  <!-- MODALS / Overlays -->
+  <div id="modal-overlay" class="hidden" style="position:fixed; inset:0; z-index:900; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.7);">
+    <div id="modal-content" class="glass-card" style="max-width:920px; width:92vw; max-height:80vh; overflow:auto;"></div>
+  </div>
+
+  <!-- toasts -->
+  <div id="di_toast" style="position:fixed; left:50%; bottom:110px; transform:translateX(-50%); z-index:1100;"></div>
+
+  <!-- ======================
+       SCRIPTS: STATE + FEATURES
+       ====================== -->
+  <script>
+    /* =========================
+       PRESERVE DI_ KEYS (NO RENAMES)
+       ========================= */
+    const KEYS = {
+      CORTEX: 'di_cortex_v23',
+      USER: 'di_userName',
+      ARCHETYPE: 'di_activeArchetype',
+      INFODOSE_NAME: 'di_infodoseName',
+      STATS: 'di_videoStats',
+      TRAIN_TXT: 'di_trainingText',
+      CRYSTALS: 'di_cristalizados',
+      TRIAD: 'di_metaTriad',
+      ACTIVE_META_ARCH: 'di_metaArchData'
+    };
+
+    /* =========================
+       ARCHETYPES (INFO DOSE — 12)
+       - NOTE: 12 canonical archetypes included
+       ========================= */
+    const ARCHETYPES_DB = {
+      "ATLAS": { id:"atlas", name:"Atlas", desc:"Estrutura & Governo", colors:{main:"#38BDF8",soft:"rgba(56,189,248,0.18)",secondary:"#0EA5E9"}, drk:"A ordem externa reflete a clareza interna. Construa.", vid:"Bt_rLbMjJDk" },
+      "NOVA": { id:"nova", name:"Nova", desc:"Inovação & Fluxo", colors:{main:"#F97316",soft:"rgba(249,115,22,0.18)",secondary:"#FDBA74"}, drk:"O erro é apenas um dado não processado. Itere.", vid:"qldgs0aLdB0" },
+      "VITALIS": { id:"vitalis", name:"Vitalis", desc:"Energia & Ação", colors:{main:"#22C55E",soft:"rgba(34,197,94,0.18)",secondary:"#4ADE80"}, drk:"O corpo sabe antes da mente duvidar. Mova-se.", vid:"_0wVkryxanE" },
+      "PULSE": { id:"pulse", name:"Pulse", desc:"Ritmo & Emoção", colors:{main:"#EC4899",soft:"rgba(236,72,153,0.18)",secondary:"#F9A8D4"}, drk:"Sinta a batida do caos e dance com ela.", vid:"Id2NI9tv1r4" },
+      "ARTEMIS": { id:"artemis", name:"Artemis", desc:"Foco & Caça", colors:{main:"#A855F7",soft:"rgba(168,85,247,0.18)",secondary:"#C4B5FD"}, drk:"Defina o alvo. O resto é apenas ruído.", vid:"FbutKMpd8MY" },
+      "SERENA": { id:"serena", name:"Serena", desc:"Paz & Harmonia", colors:{main:"#7DD3FC",soft:"rgba(125,211,252,0.14)",secondary:"#E0F2FE"}, drk:"No centro do furacão, existe um ponto imóvel. Seja ele.", vid:"hfQ1L6fCfAo" },
+      "KAOS": { id:"kaos", name:"Kaos", desc:"Mudança & Entropia", colors:{main:"#FACC15",soft:"rgba(250,204,21,0.18)",secondary:"#FDE68A"}, drk:"Quebre o padrão hoje. Amanhã nasce o novo.", vid:"Tq99vQNQ6dQ" },
+      "GENUS": { id:"genus", name:"Genus", desc:"Criação & Arte", colors:{main:"#E5E7EB",soft:"rgba(229,231,235,0.12)",secondary:"#9CA3AF"}, drk:"A excelência habita nos detalhes que ninguém vê.", vid:"DTDfkHwuMic" },
+      "LUMINE": { id:"lumine", name:"Lumine", desc:"Brilho & Carisma", colors:{main:"#FDE047",soft:"rgba(253,224,71,0.18)",secondary:"#FACC15"}, drk:"Irradie sem medo. A sombra é apenas falta de luz.", vid:"1L9_rFmIGJ8" },
+      "SOLUS": { id:"solus", name:"Solus", desc:"Vazio & Verdade", colors:{main:"#0EA5E9",soft:"rgba(14,165,233,0.20)",secondary:"#0369A1"}, drk:"O silêncio revela mais que mil estímulos.", vid:"qldgs0aLdB0" },
+      "RHEA": { id:"rhea", name:"Rhea", desc:"Cuidado & Raiz", colors:{main:"#22C55E",soft:"rgba(34,197,94,0.16)",secondary:"#16A34A"}, drk:"Nutra a raiz e o fruto virá naturalmente.", vid:"Bt_rLbMjJDk" },
+      "HORUS": { id:"horus", name:"Horus", desc:"Visão & Estratégia", colors:{main:"#5500FF",soft:"rgba(85,0,255,0.2)",secondary:"#8B5CF6"}, drk:"Observe o todo antes de agir no detalhe.", vid:"_0wVkryxanE" }
+    };
+
+    /* =========================
+       STATE
+       ========================= */
+    const STATE = {
+      screen: 1,
+      cortex: { crystals: [], matrices: [] },
+      activePanel: 'crystals',
+      currentArchetype: 'VITALIS',
+      dualtubeStats: JSON.parse(localStorage.getItem(KEYS.STATS) || '{}'),
+      player: { id:null, cat:null, minimized:false }
+    };
+
+    /* =========================
+       BOOT / INIT
+       ========================= */
+    window.addEventListener('load', () => {
+      lucide.createIcons();
+      initSystem();
+      setupNavigation();
+      ArchetypeSystem.init();
+      Cortex.render();
+      DualTube.render();
+      SyncIdentity();
+      Navigation.to(1); // open nexus by default
+    });
+
+    /* =========================
+       IDENTITY / ARCHETYPE (re-usable)
+       ========================= */
+    const ArchetypeSystem = {
+      init: () => {
+        const saved = localStorage.getItem(KEYS.ARCHETYPE);
+        if (saved && ARCHETYPES_DB[saved]) ArchetypeSystem.set(saved);
+        else ArchetypeSystem.renderDefault();
+      },
+      renderDefault: () => {
+        STATE.currentArchetype = null;
+        document.documentElement.style.setProperty('--active-color', '#E5E5E5');
+        document.documentElement.style.setProperty('--active-glow', 'rgba(255,255,255,0.06)');
+        document.getElementById('drk-line').innerText = '"O vazio é o campo de todas as possibilidades."';
+        SyncIdentity();
+      },
+      set: (key) => {
+        if(!ARCHETYPES_DB[key]) return;
+        STATE.currentArchetype = key;
+        localStorage.setItem(KEYS.ARCHETYPE, key);
+        const data = ARCHETYPES_DB[key];
+        document.documentElement.style.setProperty('--active-color', data.colors.main);
+        document.documentElement.style.setProperty('--active-glow', data.colors.soft);
+        document.documentElement.style.setProperty('--accent-secondary', data.colors.secondary);
+        const topGlow = document.getElementById('glow-top');
+        const botGlow = document.getElementById('glow-bottom');
+        if(topGlow) { topGlow.style.background = data.colors.main; topGlow.style.opacity='0.15'; }
+        if(botGlow) { botGlow.style.background = data.colors.secondary; botGlow.style.opacity='0.10'; }
+        document.getElementById('drk-line').innerText = `"${data.drk}"`;
+        // update suggestion container
+        const vidContainer = document.getElementById('archetype-video-suggestion');
+        vidContainer.onclick = () => Player.play(data.vid, `Recomendado — ${data.name}`);
+        vidContainer.innerHTML = `<img src="https://img.youtube.com/vi/${data.vid}/mqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.7;filter:grayscale(30%);">`;
+        lucide.createIcons();
+        SyncIdentity();
+      }
+    };
+
+    /* Identity helpers */
+    const Identity = {
+      openInfodoseModal: () => showInfodoseModal(),
+      showInfodoseModal: () => showInfodoseModal()
+    };
+
+    function SyncIdentity() {
+      const user = localStorage.getItem(KEYS.USER) || 'PILOTO';
+      const system = localStorage.getItem(KEYS.INFODOSE_NAME) || 'DUAL';
+      const arch = STATE.currentArchetype || localStorage.getItem(KEYS.ARCHETYPE) || null;
+      document.getElementById('displayUserHeader').innerText = (user || 'PILOTO').toUpperCase();
+      document.getElementById('displayArchetypeBadge').innerText = (arch || 'NEUTRO').toUpperCase();
+      document.getElementById('hero-title').innerText = (system || 'DUAL').toUpperCase();
+      document.getElementById('archetype-status-text').innerText = arch ? (ARCHETYPES_DB[arch].desc || '').toUpperCase() : 'AGUARDANDO SINCRONIZAÇÃO';
+    }
+
+    /* =========================
+       NAVIGATION
+       - supports Navigation.to(index)
+       - updates nav dots and viewport transform
+       - integrated with UI modes
+       ========================= */
+    const Navigation = {
+      to: (idx) => {
+        STATE.screen = idx;
+        const viewport = document.getElementById('universe-viewport');
+        const rootMode = document.documentElement.getAttribute('data-uinode') || 'DUAL';
+        if(rootMode === 'UNO') {
+          // UNO: scroll vertical (simulate by scrolling body to panel)
+          const target = document.querySelectorAll('.screen-panel')[idx];
+          if(target) { target.scrollIntoView({behavior:'smooth'}); }
+        } else {
+          // DUAL/TRINITY: horizontal transform
+          viewport.style.transform = `translateX(-${idx * 100}vw)`;
+        }
+        [0,1,2].forEach(i => document.getElementById(`dot-${i}`)?.classList.toggle('active', i===idx));
+      }
+    };
+
+    function setupNavigation() {
+      let tsX=0, tsY=0;
+      document.addEventListener('touchstart', e => { tsX = e.touches[0].clientX; tsY = e.touches[0].clientY; }, {passive:true});
+      document.addEventListener('touchend', e => {
+        const dX = tsX - e.changedTouches[0].clientX;
+        const dY = tsY - e.changedTouches[0].clientY;
+        if(Math.abs(dX)>80 && Math.abs(dX)>Math.abs(dY)) {
+          if(dX>0 && STATE.screen<2) Navigation.to(STATE.screen+1);
+          if(dX<0 && STATE.screen>0) Navigation.to(STATE.screen-1);
+        }
+      }, {passive:true});
+    }
+
+    /* =========================
+       UI Modes (UNO / DUAL / TRINITY)
+       - structural toggles, minimal and non-breaking
+       ========================= */
+    const UI = {
+      setMode: (m) => {
+        const normalized = (m||'DUAL').toUpperCase();
+        document.documentElement.setAttribute('data-uinode', normalized);
+        // update viewport transform to keep focused panel
+        if(normalized === 'UNO') {
+          // show stacked scroll layout: reset transform and ensure vertical scroll
+          document.getElementById('universe-viewport').style.transform = 'translateX(0)';
+        } else {
+          // default focus to current STATE.screen
+          document.getElementById('universe-viewport').style.transform = `translateX(-${STATE.screen * 100}vw)`;
+        }
+        toast(`Modo: ${normalized}`);
+      },
+      openDynamicArea: () => {
+        // reveal dynamic area quickly
+        Navigation.to(2);
+        toast('Área dinâmica aberta — pronto para carregar apps HTML');
+      },
+      async loadExternalHTML(url, options = { target: 'dynamic-app-container' }) {
+        // Load remote HTML into a sandboxed iframe via srcdoc (safe for runtime embedding)
+        try {
+          const res = await fetch(url);
+          if(!res.ok) throw new Error('Falha no fetch');
+          const html = await res.text();
+          const iframe = document.createElement('iframe');
+          iframe.sandbox = "allow-scripts allow-same-origin allow-forms";
+          iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = '0';
+          iframe.srcdoc = html;
+          const target = document.getElementById(options.target);
+          if(!target) throw new Error('Target não encontrado');
+          target.innerHTML = '';
+          target.appendChild(iframe);
+          toast('App carregado (sandboxed)');
+        } catch(e) {
+          toast('Falha ao carregar app: ' + (e.message||e));
+        }
+      },
+      // small helper to quickly mount HTML string (useful for drag-and-drop HTML)
+      mountHTMLString(htmlString, options = { target: 'dynamic-app-container' }) {
+        const iframe = document.createElement('iframe');
+        iframe.sandbox = "allow-scripts allow-same-origin allow-forms";
+        iframe.style.width = '100%'; iframe.style.height = '100%'; iframe.style.border = '0';
+        iframe.srcdoc = htmlString;
+        const target = document.getElementById(options.target);
+        if(!target) return toast('Target não encontrado');
+        target.innerHTML = '';
+        target.appendChild(iframe);
+        toast('HTML embutido montado (sandboxed)');
+      }
+    };
+
+    /* =========================
+       PLAYER: persistent DualTube player
+       Features:
+         - play(id,cat) keeps iframe in global-player
+         - minimize() toggles mini view (keeps playback)
+         - openDedicatedView: navigates to DualTube screen and focuses state
+       ========================= */
+    const Player = {
+      play: (id, cat) => {
+        STATE.player.id = id; STATE.player.cat = cat; STATE.player.minimized = false;
+        const gp = document.getElementById('global-player');
+        const wrap = document.getElementById('player-frame-wrap');
+        wrap.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${id}?autoplay=1&modestbranding=1&rel=0&enablejsapi=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        gp.classList.remove('hidden'); gp.classList.remove('mini'); gp.style.display = 'block';
+        document.getElementById('player-meta').classList.remove('hidden');
+        document.getElementById('player-meta').innerText = `${cat || 'Sessão Ativa'} — ${id}`;
+        // persist stat
+        STATE.dualtubeStats[id] = { ts:Date.now(), cat };
+        localStorage.setItem(KEYS.STATS, JSON.stringify(STATE.dualtubeStats));
+        DualTube.render();
+      },
+      minimize: () => {
+        const gp = document.getElementById('global-player');
+        gp.classList.add('mini'); STATE.player.minimized = true;
+      },
+      stop: () => {
+        const gp = document.getElementById('global-player');
+        gp.style.display = 'none'; gp.classList.add('hidden');
+        document.getElementById('player-frame-wrap').innerHTML = '';
+        STATE.player = { id:null, cat:null, minimized:false };
+      },
+      openDedicatedView: (id, cat) => {
+        // keep playing and open DualTube screen
+        Player.play(id, cat);
+        Navigation.to(2);
+        // optionally focus video item (UI: we leave as TODO if you want auto-scroll)
+      }
+    };
+
+    /* =========================
+       DUALTUBE (render + actions)
+       - uses persistent Player
+       ========================= */
+    const DualTube = {
+      data: [
+        { cat: 'Frequências e Rituais', vids: ["Bt_rLbMjJDk", "_0wVkryxanE", "Id2NI9tv1r4"], desc: 'Ambientação, Aromas e Ativação' },
+        { cat: 'Arquitetura Cognitiva', vids: ["qldgs0aLdB0", "FbutKMpd8MY", "1L9_rFmIGJ8"], desc: 'Dopamina, Foco e Subconsciente' },
+        { cat: 'Meditações Profundas', vids: ["hfQ1L6fCfAo", "Tq99vQNQ6dQ", "DTDfkHwuMic"], desc: 'Deriva, Navegação e Silêncio' }
+      ],
+      render: () => {
+        const container = document.getElementById('video-categories');
+        const stats = STATE.dualtubeStats || {};
+        container.innerHTML = DualTube.data.map(c => `
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div><strong style="font-size:13px;">${c.cat}</strong><div style="font-size:10px;color:rgba(255,255,255,0.35);text-transform:uppercase">${c.desc}</div></div>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:10px; overflow:auto; padding-bottom:8px;">
+              ${c.vids.map(id => `
+                <div style="min-width:220px; height:124px; border-radius:12px; overflow:hidden; position:relative; cursor:pointer; background:#0b0b0b; border:1px solid rgba(255,255,255,0.04);" onclick="Player.openDedicatedView('${id}','${c.cat}')">
+                  <img src="https://img.youtube.com/vi/${id}/mqdefault.jpg" style="width:100%;height:100%;object-fit:cover;opacity:.7;">
+                  <div style="position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,0.6);padding:6px 8px;border-radius:8px;font-size:11px;color:rgba(255,255,255,0.85);">Sintonizar</div>
+                  ${stats[id] ? '<div style="position:absolute;top:8px;left:8px;background:rgba(0,0,0,0.6);padding:4px 6px;border-radius:8px;font-size:9px;color:var(--active-color);">VISTO</div>' : ''}
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `).join('');
+        // count
+        const count = Object.keys(STATE.dualtubeStats || {}).length;
+        document.getElementById('dt-watched-count').innerText = count;
+        const dup = document.getElementById('dt-watched-count-duplicate');
+        if(dup) dup.innerText = count;
+        lucide.createIcons();
+      }
+    };
+
+    /* =========================
+       CORTEX functions (kept behavior; saved under di_cortex_v23)
+       ========================= */
+    function loadSystemCortex() {
+      const saved = localStorage.getItem(KEYS.CORTEX);
+      if(saved) STATE.cortex = JSON.parse(saved);
+      else {
+        STATE.cortex = {
+          crystals: [
+            { id: 1, content: "O equilíbrio precede a performance.", tags: ["filosofia"], archetype: "VITALIS", pinned: true }
+          ],
+          matrices: [ { id:'m1', name:'Treino Primário', content:'Diretrizes iniciais do sistema...', active:true } ]
+        };
+        saveCortex();
+      }
+    }
+    function saveCortex(){ localStorage.setItem(KEYS.CORTEX, JSON.stringify(STATE.cortex)); }
+
+    const Cortex = {
+      switch: (tab) => {
+        STATE.activePanel = tab;
+        document.getElementById('panel-crystals').classList.toggle('hidden', tab !== 'crystals');
+        document.getElementById('panel-matrices').classList.toggle('hidden', tab !== 'matrices');
+        Cortex.render();
+      },
+      render: () => {
+        const container = document.getElementById('crystal-container');
+        const query = (document.getElementById('memory-search')?.value || '').toLowerCase();
+        const filtered = (STATE.cortex.crystals || []).filter(c => c.content.toLowerCase().includes(query) || (c.tags && c.tags.some(t=>t.toLowerCase().includes(query))));
+        container.innerHTML = filtered.map(c => {
+          const archData = (c.archetype && ARCHETYPES_DB[c.archetype]) || null;
+          const color = archData ? archData.colors.main : 'var(--active-color)';
+          return `<div class="glass-card" style="padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                ${(c.tags||[]).map(t=>`<span style="font-size:10px;padding:4px 8px;background:rgba(255,255,255,0.02);border-radius:999px;">${t}</span>`).join('')}
+                ${c.archetype ? `<span style="font-size:10px;padding:4px 8px;border-radius:999px;border:1px solid ${color}; color:${color};">${c.archetype}</span>` : ''}
+              </div>
+              <div style="display:flex; gap:8px; opacity:0.6;">
+                <button onclick="Cortex.togglePin(${c.id})">📌</button>
+                <button onclick="Cortex.deleteMemory(${c.id})">🗑</button>
+              </div>
+            </div>
+            <p style="margin-top:10px; font-style:italic;">"${c.content}"</p>
+          </div>`;
+        }).join('') || `<div style="text-align:center;color:rgba(255,255,255,0.08);padding:40px;">Nenhum cristal encontrado</div>`;
+      },
+      openNewMemory: () => {
+        Modal.show(`
+          <h3 style="font-weight:900;">Novo Cristal</h3>
+          <textarea id="new-mem-txt" style="width:100%;height:120px;margin-top:12px;background:transparent;border:1px solid rgba(255,255,255,0.04);border-radius:8px;padding:12px;"></textarea>
+          <input id="new-mem-tags" placeholder="Tags (vírgula)" style="width:100%;margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,0.04);padding:8px;border-radius:8px;">
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+            <button onclick="Modal.hide()" class="glass-pill">Cancelar</button>
+            <button onclick="Cortex.saveNewMemory()" class="glass-pill">Cristalizar</button>
+          </div>
+        `);
+        setTimeout(()=>document.getElementById('new-mem-txt')?.focus(),100);
+      },
+      saveNewMemory: () => {
+        const content = document.getElementById('new-mem-txt').value;
+        const tags = (document.getElementById('new-mem-tags').value||'').split(',').map(t=>t.trim()).filter(Boolean);
+        if(!content) return toast('Escreva algo antes de cristalizar.');
+        const newMem = { id:Date.now(), content, tags, archetype: STATE.currentArchetype, pinned:false };
+        STATE.cortex.crystals.unshift(newMem);
+        saveCortex(); Cortex.render(); Modal.hide(); toast('Memória fixada.');
+      },
+      togglePin: (id) => {
+        const m = STATE.cortex.crystals.find(c=>c.id===id);
+        if(m) m.pinned = !m.pinned;
+        saveCortex(); Cortex.render();
+      },
+      deleteMemory: (id) => {
+        STATE.cortex.crystals = STATE.cortex.crystals.filter(c=>c.id!==id);
+        saveCortex(); Cortex.render();
+      },
+      loadToEditor: (id) => {},
+      createNewMatrix: () => {},
+      saveActiveMatrix: () => {},
+      importMatrix: () => {},
+      deleteMatrix: () => {}
+    };
+
+    /* =========================
+       Modal util
+       ========================= */
+    const Modal = {
+      show: (html) => {
+        const overlay = document.getElementById('modal-overlay');
+        const content = document.getElementById('modal-content');
+        content.innerHTML = html;
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+      },
+      hide: () => {
+        const overlay = document.getElementById('modal-overlay');
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none';
+      }
+    };
+
+    /* =========================
+       toast util
+       ========================= */
+    function toast(m, time=2400) {
+      const t = document.getElementById('di_toast');
+      const d = document.createElement('div');
+      d.style.background='rgba(0,0,0,0.75)';
+      d.style.border='1px solid rgba(255,255,255,0.06)';
+      d.style.padding='10px 18px';
+      d.style.borderRadius='999px';
+      d.style.color='var(--active-color)';
+      d.style.fontWeight='800';
+      d.style.fontSize='12px';
+      d.style.marginTop='8px';
+      d.innerText = m;
+      t.appendChild(d);
+      setTimeout(()=>{ d.style.opacity='0'; d.style.transform='translateY(8px)'; setTimeout(()=>d.remove(),300); }, time);
+    }
+
+    /* =========================
+       Infodose modal + training scripts
+       ========================= */
+    const INFODOSE_MICRO_SCRIPTS = {
+      ATLAS: { open: "Erga-se. A estrutura do seu império começa agora.", ritual: "Respire fundo e visualize uma coluna de luz sustentando suas costas.", affirmation: "Eu sou o alicerce sobre o qual o futuro é construído." },
+      NOVA: { open: "E aí! O universo tá cheio de glitches esperando nossa correção criativa.", ritual: "Estale os dedos três vezes e sorria para o nada. A mágica começou.", affirmation: "Minha mente é um prisma que refrata o impossível em soluções." },
+      VITALIS: { open: "Sem hesitação. O tempo é agora e a energia está no pico.", ritual: "Três respirações explosivas. Sinta o sangue acordar.", affirmation: "Eu sou a força motriz que transforma intenção em resultado." },
+      PULSE: { open: "Sente o ritmo? O dia já começou a tocar nossa música.", ritual: "Feche os olhos e encontre a batida do seu coração. Sincronize.", affirmation: "Eu fluo com a corrente, dançando entre o caos e a ordem." },
+      ARTEMIS: { open: "Curso traçado. O horizonte nos chama, capitão.", ritual: "Olhe para o ponto mais distante que conseguir ver. Foque.", affirmation: "Minha vontade é a bússola; meu foco é o norte verdadeiro." },
+      LUMINE: { open: "Olha quanto brilho! Hoje vamos iluminar cada canto escuro.", ritual: "Imagine uma luz dourada saindo do seu peito e preenchendo a sala.", affirmation: "Eu irradio positividade e clareza por onde passo." },
+      SERENA: { open: "Calma. O mundo lá fora gira, mas aqui dentro há paz.", ritual: "Uma mão no peito, outra na barriga. Sinta o quietude.", affirmation: "No silêncio do meu centro, encontro todas as respostas." },
+      KAOS: { open: "Quebre o padrão. A ordem é só uma ilusão que vamos desmantelar.", ritual: "Faça um movimento brusco e inesperado. Acorde o sistema.", affirmation: "Eu abraço a incerteza como combustível para a revolução." },
+      GENUS: { open: "Precisão. Cada detalhe importa na obra que somos.", ritual: "Observe um objeto próximo. Note cada textura e cor por 10 segundos.", affirmation: "A excelência é meu hábito; a perfeição, meu horizonte." },
+      RHEA: { open: "Bem-vindo de volta. O dia te recebe com um abraço suave.", ritual: "Abrace a si mesmo por um instante. Sinta o conforto de ser quem é.", affirmation: "Eu cuido de mim para poder cuidar do mundo." },
+      SOLUS: { open: "No vazio, a verdade ecoa. Escute o que não é dito.", ritual: "Fique em silêncio absoluto até ouvir o som da sala.", affirmation: "Minha presença é suficiente. Minha mente é um santuário." },
+      HORUS: { open: "Visão panorâmica ativada. Estratégia definida. Executar.", ritual: "Visualize seu dia inteiro em um segundo, do início ao fim.", affirmation: "Eu vejo além do óbvio. Eu comando meu destino." }
+    };
+
+    let INFODOSE_TRAINING_TEXT = `Treinamento Completo A.Infodose...\n\n-- ANEXO: MICRO-SCRIPTS --\n`;
+    Object.keys(INFODOSE_MICRO_SCRIPTS).forEach(key => {
+      const s = INFODOSE_MICRO_SCRIPTS[key];
+      INFODOSE_TRAINING_TEXT += `\n[${key}]\n- Abertura: "${s.open}"\n`;
+    });
+
+    function applyInfodoseTraining() {
+      try {
+        const activeArch = STATE.currentArchetype;
+        localStorage.setItem(KEYS.TRAIN_TXT, INFODOSE_TRAINING_TEXT);
+        toast(`Treinamento A.Infodose aplicado (${activeArch})`);
+        // copy main script to clipboard for convenience (best-effort)
+        const script = INFODOSE_MICRO_SCRIPTS[activeArch] || { open: '' };
+        const prompt = `[ATIVAR: ${activeArch}]\n[SCRIPT]: ${script.open}`;
+        navigator.clipboard?.writeText(prompt).catch(()=>{});
+      } catch(e) { toast('Falha ao aplicar treino'); }
+    }
+
+    function showInfodoseModal(){
+      const currentVoice = STATE.currentArchetype || 'NEUTRO';
+      const voicesHtml = Object.keys(ARCHETYPES_DB).map(k => {
+        const color = ARCHETYPES_DB[k].colors.main;
+        const sel = (k === currentVoice) ? 'border:2px solid '+color+';' : '';
+        return `<button data-voice="${k}" style="margin:6px;padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.02);${sel}">${k}</button>`;
+      }).join('');
+      Modal.show(`
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div><strong style="font-size:18px;">Matriz de Treinamento (${currentVoice})</strong><div style="font-size:10px;color:rgba(255,255,255,0.4)">Sincronizado com Archetype System</div></div>
+          <div style="display:flex;gap:8px;"><button onclick="applyInfodoseTraining()" class="glass-pill">Aplicar</button><button onclick="Modal.hide()" class="glass-pill">Fechar</button></div>
+        </div>
+        <pre style="background:rgba(0,0,0,0.35);padding:12px;border-radius:8px;margin-top:12px;max-height:280px;overflow:auto;">${escapeHtml(INFODOSE_TRAINING_TEXT)}</pre>
+        <div style="margin-top:12px;"><strong style="font-size:12px;">Mudar Arquétipo Global</strong><div style="display:flex;flex-wrap:wrap;margin-top:8px;">${voicesHtml}</div></div>
+      `);
+
+      // click handlers
+      const overlay = document.getElementById('modal-content');
+      overlay.querySelectorAll('button[data-voice]').forEach(btn => {
+        btn.addEventListener('click', (ev) => {
+          const v = ev.currentTarget.dataset.voice;
+          ArchetypeSystem.set(v);
+          Modal.hide();
+          showInfodoseModal(); // refresh to reflect selection
+        });
+      });
+    }
+
+    function escapeHtml(s){ return (s+'').replace(/[&<>"']/g, function(m){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]); }); }
+
+    /* =========================
+       Boot: load cortex + initial
+       ========================= */
+    function initSystem(){
+      loadSystemCortex();
+      // restore archetype
+      const savedArch = localStorage.getItem(KEYS.ARCHETYPE);
+      if(savedArch && ARCHETYPES_DB[savedArch]) {
+        ArchetypeSystem.set(savedArch);
+      } else {
+        ArchetypeSystem.renderDefault();
+      }
+      SyncIdentity();
+      DualTube.render();
+    }
+
+    /* =========================
+       ORB Drag (keeps earlier UX)
+       ========================= */
+    const OrbDrag = {
+      active:false, startX:0, el:null,
+      start: function(e){
+        this.active=true;
+        this.startX = e.type.includes('mouse')? e.clientX : e.touches[0].clientX;
+        this.el = document.getElementById('orbClickable');
+        const move = (ev) => { if(!this.active) return; const x = ev.type.includes('mouse')?ev.clientX:ev.touches[0].clientX; const diff = (x - this.startX); this.el.style.transform = `translateX(${diff/6}px) rotate(${diff/30}deg)`; };
+        const end = () => { this.active=false; const style = window.getComputedStyle(this.el); const matrix = new DOMMatrix(style.transform); if(matrix.m41 > 70 && STATE.screen > 0) Navigation.to(STATE.screen - 1); else if(matrix.m41 < -70 && STATE.screen < 2) Navigation.to(STATE.screen + 1); this.el.style.transform = 'none'; window.removeEventListener('mousemove', move); window.removeEventListener('mouseup', end); window.removeEventListener('touchmove', move); window.removeEventListener('touchend', end); };
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', end);
+        window.addEventListener('touchmove', move, {passive:false});
+        window.addEventListener('touchend', end);
+      }
+    };
+
+    /* =========================
+       Utility: expose a small API for runtime operations
+       - UI.loadExternalHTML(url)
+       - Player.play(id, cat)
+       ========================= */
+    window.UI = UI;
+    window.Player = Player;
+    window.DualTube = DualTube;
+    window.ArchetypeSystem = ArchetypeSystem;
+    window.Cortex = Cortex;
+    window.Navigation = Navigation;
+    window.SyncIdentity = SyncIdentity;
+    window.applyInfodoseTraining = applyInfodoseTraining;
+
+  </script>
+</body>
+</html>
