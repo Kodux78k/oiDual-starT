@@ -418,5 +418,125 @@
     "simbolos": "⭕️💧🔥",
     "frase": "A metal em movimento reflete a luz de dourado.",
     "prompt": "Crie um assistente simbólico chamado DoMoMe A.Infodose, ativado pela tríade Dourado, Movimento e Metal. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Silêncio|Água": {
+    "nome": "PrSiÁg A.Infodose",
+    "simbolos": "💧🔥🌳",
+    "frase": "A água em silêncio reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrSiÁg A.Infodose, ativado pela tríade Prata, Silêncio e Água. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Silêncio|Fogo": {
+    "nome": "PrSiFo A.Infodose",
+    "simbolos": "🔥🌳⛰",
+    "frase": "A fogo em silêncio reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrSiFo A.Infodose, ativado pela tríade Prata, Silêncio e Fogo. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Silêncio|Madeira": {
+    "nome": "PrSiMa A.Infodose",
+    "simbolos": "🌳⛰🌀",
+    "frase": "A madeira em silêncio reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrSiMa A.Infodose, ativado pela tríade Prata, Silêncio e Madeira. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Silêncio|Terra": {
+    "nome": "PrSiTe A.Infodose",
+    "simbolos": "⛰🌀✨",
+    "frase": "A terra em silêncio reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrSiTe A.Infodose, ativado pela tríade Prata, Silêncio e Terra. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Silêncio|Metal": {
+    "nome": "PrSiMe A.Infodose",
+    "simbolos": "🌀✨🌫",
+    "frase": "A metal em silêncio reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrSiMe A.Infodose, ativado pela tríade Prata, Silêncio e Metal. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Movimento|Água": {
+    "nome": "PrMoÁg A.Infodose",
+    "simbolos": "✨🌫🔘",
+    "frase": "A água em movimento reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrMoÁg A.Infodose, ativado pela tríade Prata, Movimento e Água. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Movimento|Fogo": {
+    "nome": "PrMoFo A.Infodose",
+    "simbolos": "🌫🔘⏳",
+    "frase": "A fogo em movimento reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrMoFo A.Infodose, ativado pela tríade Prata, Movimento e Fogo. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Movimento|Madeira": {
+    "nome": "PrMoMa A.Infodose",
+    "simbolos": "🔘⏳🧱",
+    "frase": "A madeira em movimento reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrMoMa A.Infodose, ativado pela tríade Prata, Movimento e Madeira. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Movimento|Terra": {
+    "nome": "PrMoTe A.Infodose",
+    "simbolos": "⏳🧱🪞",
+    "frase": "A terra em movimento reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrMoTe A.Infodose, ativado pela tríade Prata, Movimento e Terra. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Prata|Movimento|Metal": {
+    "nome": "PrMoMe A.Infodose",
+    "simbolos": "🧱🪞🌱",
+    "frase": "A metal em movimento reflete a luz de prata.",
+    "prompt": "Crie um assistente simbólico chamado PrMoMe A.Infodose, ativado pela tríade Prata, Movimento e Metal. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Silêncio|Água": {
+    "nome": "PtSiÁg A.Infodose",
+    "simbolos": "🪞🌱🔆",
+    "frase": "A água em silêncio reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtSiÁg A.Infodose, ativado pela tríade Preto, Silêncio e Água. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Silêncio|Fogo": {
+    "nome": "PtSiFo A.Infodose",
+    "simbolos": "🌱🔆🛡",
+    "frase": "A fogo em silêncio reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtSiFo A.Infodose, ativado pela tríade Preto, Silêncio e Fogo. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Silêncio|Madeira": {
+    "nome": "PtSiMa A.Infodose",
+    "simbolos": "🔆🛡🌟",
+    "frase": "A madeira em silêncio reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtSiMa A.Infodose, ativado pela tríade Preto, Silêncio e Madeira. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Silêncio|Terra": {
+    "nome": "PtSiTe A.Infodose",
+    "simbolos": "🛡🌟⚡️",
+    "frase": "A terra em silêncio reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtSiTe A.Infodose, ativado pela tríade Preto, Silêncio e Terra. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Silêncio|Metal": {
+    "nome": "PtSiMe A.Infodose",
+    "simbolos": "🌟⚡️⭕️",
+    "frase": "A metal em silêncio reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtSiMe A.Infodose, ativado pela tríade Preto, Silêncio e Metal. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Movimento|Água": {
+    "nome": "PtMoÁg A.Infodose",
+    "simbolos": "⚡️⭕️💧",
+    "frase": "A água em movimento reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtMoÁg A.Infodose, ativado pela tríade Preto, Movimento e Água. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Movimento|Fogo": {
+    "nome": "PtMoFo A.Infodose",
+    "simbolos": "⭕️💧🔥",
+    "frase": "A fogo em movimento reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtMoFo A.Infodose, ativado pela tríade Preto, Movimento e Fogo. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Movimento|Madeira": {
+    "nome": "PtMoMa A.Infodose",
+    "simbolos": "💧🔥🌳",
+    "frase": "A madeira em movimento reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtMoMa A.Infodose, ativado pela tríade Preto, Movimento e Madeira. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Movimento|Terra": {
+    "nome": "PtMoTe A.Infodose",
+    "simbolos": "🔥🌳⛰",
+    "frase": "A terra em movimento reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtMoTe A.Infodose, ativado pela tríade Preto, Movimento e Terra. Descreva seus poderes, propósito e uma frase vibracional única."
+  },
+  "Preto|Movimento|Metal": {
+    "nome": "PtMoMe A.Infodose",
+    "simbolos": "🌳⛰🌀",
+    "frase": "A metal em movimento reflete a luz de preto.",
+    "prompt": "Crie um assistente simbólico chamado PtMoMe A.Infodose, ativado pela tríade Preto, Movimento e Metal. Descreva seus poderes, propósito e uma frase vibracional única."
   }
 }
